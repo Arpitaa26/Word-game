@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
-import { RotateCcw, Sun, Moon, Type, Layers } from 'lucide-react';
+import { RotateCcw, Sun, Moon, Type, Activity } from 'lucide-react';
 import { MATERIAL_PRESETS } from '../canvas/LivingTypeEngine';
 
-const PRESET_WORDS = ['CREATE', 'ELASTIC', 'KINETIC', 'DODO', 'FORM'];
+const PRESET_WORDS = ['CREATE', 'ELASTIC', 'KINETIC', 'DODO', 'JELLY'];
 
 export function ControlsDock({
   text,
@@ -19,7 +19,7 @@ export function ControlsDock({
 
   const handleInputChange = (e) => {
     const val = e.target.value.toUpperCase();
-    if (val.length <= 16) {
+    if (val.length <= 14) {
       setText(val);
     }
   };
@@ -36,10 +36,10 @@ export function ControlsDock({
 
   return (
     <nav className="controls-dock" aria-label="Living Type controls">
-      {/* 1. Custom Text Input Pill */}
+      {/* 1. Custom Text Input with Presets */}
       <div className="dock-section text-input-group">
-        <label htmlFor="custom-type-input" className="sr-only">Custom Typography</label>
-        <span className="input-prefix">TXT</span>
+        <label htmlFor="custom-type-input" className="sr-only">Type word</label>
+        <span className="input-prompt">Word</span>
         <input
           id="custom-type-input"
           ref={inputRef}
@@ -47,12 +47,11 @@ export function ControlsDock({
           value={text}
           onChange={handleInputChange}
           placeholder="TYPE WORD..."
-          maxLength={14}
+          maxLength={12}
           className="editorial-input"
           autoComplete="off"
           spellCheck="false"
         />
-        {/* Quick Preset Buttons */}
         <div className="preset-chips">
           {PRESET_WORDS.map((word) => (
             <button
@@ -69,11 +68,11 @@ export function ControlsDock({
 
       <div className="dock-separator" />
 
-      {/* 2. Material Selector */}
+      {/* 2. Physical Material Feeling */}
       <div className="dock-section material-group">
         <span className="dock-label">
-          <Layers size={13} className="dock-icon" />
-          <span>MATERIAL</span>
+          <Activity size={12} className="dock-icon" />
+          <span>Physics</span>
         </span>
         <div className="segmented-control">
           {Object.entries(MATERIAL_PRESETS).map(([key, data]) => (
@@ -92,11 +91,11 @@ export function ControlsDock({
 
       <div className="dock-separator" />
 
-      {/* 3. Typography Family Selector */}
+      {/* 3. Typeface Selector */}
       <div className="dock-section font-group">
         <span className="dock-label">
-          <Type size={13} className="dock-icon" />
-          <span>TYPEFACE</span>
+          <Type size={12} className="dock-icon" />
+          <span>Type</span>
         </span>
         <div className="segmented-control">
           {fonts.map((f) => (
@@ -133,8 +132,8 @@ export function ControlsDock({
           title="Reset to default resting state [R]"
           aria-label="Reset experience"
         >
-          <RotateCcw size={13} />
-          <span>RESET</span>
+          <RotateCcw size={12} />
+          <span>Reset</span>
           <kbd className="key-hint">R</kbd>
         </button>
       </div>

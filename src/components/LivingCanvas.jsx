@@ -72,7 +72,17 @@ export const LivingCanvas = forwardRef(function LivingCanvas(
     },
     triggerRipple: (x, y) => {
       if (engineRef.current) {
-        engineRef.current.triggerRipple(x, y);
+        engineRef.current.triggerShockwave(x, y);
+      }
+    },
+    triggerWave: () => {
+      if (engineRef.current) {
+        engineRef.current.triggerWave();
+      }
+    },
+    jiggle: () => {
+      if (engineRef.current) {
+        engineRef.current.jiggle();
       }
     },
   }));

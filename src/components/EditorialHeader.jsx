@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, Waves, Sparkles } from 'lucide-react';
 import { soundEngine } from '../canvas/sound';
 
-export function EditorialHeader({ stats }) {
+export function EditorialHeader({ stats, onTriggerWave, onJiggle }) {
   const [soundEnabled, setSoundEnabled] = useState(false);
 
   const handleToggleSound = () => {
@@ -16,42 +16,52 @@ export function EditorialHeader({ stats }) {
         <div className="brand-group">
           <span className="live-indicator" />
           <h1 className="project-title">LIVING TYPE</h1>
-          <span className="project-tag">EXPERIMENT 01</span>
         </div>
         <p className="project-subtitle">
-          Soft physical typography & generative viscoelastic simulation
+          Interactive Soft Physical Typography
         </p>
       </div>
 
       <div className="header-right">
-        {/* Real-time Telemetry Pill */}
-        <div className="telemetry-pill">
-          <div className="telemetry-item">
-            <span className="telemetry-label">STATE</span>
-            <span className="telemetry-val highlight">{stats?.state || 'Resting'}</span>
-          </div>
-          <div className="telemetry-divider" />
-          <div className="telemetry-item">
-            <span className="telemetry-label">STRAIN</span>
-            <span className="telemetry-val">{stats?.strain || '0.0'}%</span>
-          </div>
-          <div className="telemetry-divider" />
-          <div className="telemetry-item">
-            <span className="telemetry-label">FPS</span>
-            <span className="telemetry-val">{stats?.fps || 60}</span>
-          </div>
+        {/* Dynamic Status Indicator */}
+        <div className="status-badge" title="Current physical state">
+          <span className="status-dot" />
+          <span className="status-text">{stats?.state || 'Resting'}</span>
         </div>
 
-        {/* Audio Feedback Toggle */}
-        <button
-          type="button"
-          onClick={handleToggleSound}
-          className={`icon-btn ${soundEnabled ? 'active' : ''}`}
-          title={soundEnabled ? 'Mute micro-acoustic feedback' : 'Enable physical sound feedback'}
-          aria-label="Toggle sound feedback"
-        >
-          {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
-        </button>
+        {/* Quick Interactive Triggers */}
+        <div className="header-actions">
+          <button
+            type="button"
+            onClick={onTriggerWave}
+            className="action-pill-btn"
+            title="Send an acoustic kinetic wave across the letters"
+          >
+            <Waves size={13} />
+            <span>Wave</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onJiggle}
+            className="action-pill-btn"
+            title="Jiggle letters with elastic impulse"
+          >
+            <Sparkles size={13} />
+            <span>Jiggle</span>
+          </button>
+
+          {/* Sound Toggle */}
+          <button
+            type="button"
+            onClick={handleToggleSound}
+            className={`icon-btn ${soundEnabled ? 'active' : ''}`}
+            title={soundEnabled ? 'Mute physical sound' : 'Enable physical acoustic feedback'}
+            aria-label="Toggle sound feedback"
+          >
+            {soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+          </button>
+        </div>
       </div>
     </header>
   );

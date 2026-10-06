@@ -3,7 +3,6 @@ import { LivingCanvas } from './components/LivingCanvas';
 import { EditorialHeader } from './components/EditorialHeader';
 import { ControlsDock } from './components/ControlsDock';
 import { InteractionGuide } from './components/InteractionGuide';
-import { EditorialCorners } from './components/EditorialCorners';
 import './styles/living-type.css';
 
 export default function App() {
@@ -14,8 +13,8 @@ export default function App() {
   const [stats, setStats] = useState({
     fps: 60,
     state: 'Resting',
-    ripples: 0,
-    strain: '0.0',
+    activeChar: null,
+    tension: '0.0',
   });
   const [hasInteracted, setHasInteracted] = useState(false);
 
@@ -43,7 +42,23 @@ export default function App() {
     }
   }, []);
 
-  // Keyboard shortcut [R] for reset
+  // Trigger kinetic wave
+  const handleTriggerWave = useCallback(() => {
+    if (canvasRef.current) {
+      canvasRef.current.triggerWave();
+    }
+    setHasInteracted(true);
+  }, []);
+
+  // Trigger jiggle
+  const handleJiggle = useCallback(() => {
+    if (canvasRef.current) {
+      canvasRef.current.jiggle();
+    }
+    setHasInteracted(true);
+  }, []);
+
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Ignore if user is currently typing in an input or textarea
@@ -54,18 +69,23 @@ export default function App() {
         return;
       }
 
-      if (e.key.toLowerCase() === 'r') {
+      const key = e.key.toLowerCase();
+      if (key === 'r') {
         handleReset();
+      } else if (key === 'w') {
+        handleTriggerWave();
+      } else if (key === 'j') {
+        handleJiggle();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleReset]);
+  }, [handleReset, handleTriggerWave, handleJiggle]);
 
   return (
     <main className="app-container" data-theme={themeKey}>
-      {/* 1. Background WebGL Soft Physical Typography Canvas */}
+      {/* 1. Multi-Body Viscoelastic Typography Canvas */}
       <LivingCanvas
         ref={canvasRef}
         text={text}
@@ -75,16 +95,17 @@ export default function App() {
         onStatsUpdate={handleStatsUpdate}
       />
 
-      {/* 2. Gallery Registration & Coordinate Corners */}
-      <EditorialCorners themeKey={themeKey} />
+      {/* 2. Top Header with Minimal State & Quick Action Triggers */}
+      <EditorialHeader
+        stats={stats}
+        onTriggerWave={handleTriggerWave}
+        onJiggle={handleJiggle}
+      />
 
-      {/* 3. Top Editorial Header with Telemetry & Sound */}
-      <EditorialHeader stats={stats} themeKey={themeKey} />
-
-      {/* 4. Subtle Interaction Cues / Guide */}
+      {/* 3. Subtle Interaction Cue */}
       <InteractionGuide hasInteracted={hasInteracted} />
 
-      {/* 5. Minimal Bottom Controls Dock */}
+      {/* 4. Minimal Bottom Controls Dock */}
       <ControlsDock
         text={text}
         setText={setText}
