@@ -283,44 +283,46 @@ export class LivingTypeEngine {
     const ctx = this.offscreenCtx;
     ctx.clearRect(0, 0, width, height);
 
-    const textToRender = (this.text || 'CREATE').trim();
+    const textToRender = typeof this.text === 'string' ? this.text.trim() : 'CREATE';
 
-    let fontWeight = '700';
-    let fontStyle = 'normal';
-    let letterSpacing = '-0.04em';
+    if (textToRender.length > 0) {
+      let fontWeight = '700';
+      let fontStyle = 'normal';
+      let letterSpacing = '-0.04em';
 
-    if (this.fontFamily.toLowerCase().includes('serif')) {
-      fontWeight = '400';
-      fontStyle = 'italic';
-      letterSpacing = '-0.02em';
-    } else if (this.fontFamily.toLowerCase().includes('space')) {
-      fontWeight = '700';
-      letterSpacing = '0.02em';
-    }
+      if (this.fontFamily.toLowerCase().includes('serif')) {
+        fontWeight = '400';
+        fontStyle = 'italic';
+        letterSpacing = '-0.02em';
+      } else if (this.fontFamily.toLowerCase().includes('space')) {
+        fontWeight = '700';
+        letterSpacing = '0.02em';
+      }
 
-    if ('letterSpacing' in ctx) {
-      ctx.letterSpacing = letterSpacing;
-    }
+      if ('letterSpacing' in ctx) {
+        ctx.letterSpacing = letterSpacing;
+      }
 
-    const targetWidth = width * 0.72;
-    let fontSize = Math.min(width * 0.22, height * 0.35);
+      const targetWidth = width * 0.72;
+      let fontSize = Math.min(width * 0.22, height * 0.35);
 
-    ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${this.fontFamily}", sans-serif`;
-    let measured = ctx.measureText(textToRender).width;
-
-    if (measured > targetWidth) {
-      fontSize = fontSize * (targetWidth / measured);
       ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${this.fontFamily}", sans-serif`;
+      let measured = ctx.measureText(textToRender).width;
+
+      if (measured > targetWidth) {
+        fontSize = fontSize * (targetWidth / measured);
+        ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${this.fontFamily}", sans-serif`;
+      }
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#FFFFFF';
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      ctx.fillText(textToRender, centerX, centerY);
     }
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#FFFFFF';
-
-    const centerX = width / 2;
-    const centerY = height / 2;
-
-    ctx.fillText(textToRender, centerX, centerY);
 
     const { gl } = this;
     if (gl && this.texture) {

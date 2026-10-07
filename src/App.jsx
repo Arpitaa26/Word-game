@@ -2,25 +2,39 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { LivingCanvas } from './components/LivingCanvas';
 import { EditorialHeader } from './components/EditorialHeader';
 import { ControlsDock } from './components/ControlsDock';
+import { soundEngine } from './canvas/sound';
 import './styles/living-type.css';
-
-const PRESET_WORDS = ['CREATE', 'ELASTIC', 'KINETIC', 'DODO', 'FORM'];
 
 export default function App() {
   const [text, setText] = useState('CREATE');
   const [materialKey, setMaterialKey] = useState('silicone');
+  const [soundEnabled, setSoundEnabled] = useState(false);
+
   const canvasRef = useRef(null);
+  const inputRef = useRef(null);
+  const prevTextRef = useRef('CREATE');
 
   const handleReset = useCallback(() => {
     setText('CREATE');
     setMaterialKey('silicone');
+    prevTextRef.current = 'CREATE';
     if (canvasRef.current) {
       canvasRef.current.reset();
     }
   }, []);
 
+  const handleTextChange = useCallback((nextVal) => {
+    setText(nextVal);
+    if (soundEnabled && nextVal.length > prevTextRef.current.length) {
+      const addedChar = nextVal[nextVal.length - 1];
+      soundEngine.playPianoKeyForChar(addedChar);
+    }
+    prevTextRef.current = nextVal;
+  }, [soundEnabled]);
+
   const handleSelectWord = useCallback((newWord) => {
     setText(newWord);
+    prevTextRef.current = newWord;
     if (canvasRef.current) {
       canvasRef.current.triggerRipple(0.5, 0.5);
     }
@@ -33,35 +47,25 @@ export default function App() {
     }
   }, []);
 
+  const handleToggleSound = useCallback(() => {
+    const nextState = soundEngine.toggle();
+    setSoundEnabled(nextState);
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-
-      if (e.key === 'Backspace') {
-        e.preventDefault();
-        setText((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
-        if (canvasRef.current) {
-          canvasRef.current.triggerRipple(0.5, 0.5);
-        }
+      if (document.activeElement === inputRef.current) {
         return;
       }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
 
       if (e.key.toLowerCase() === 'r' && (e.shiftKey || e.key === 'Escape')) {
         handleReset();
         return;
       }
 
-      if (e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
-        const char = e.key.toUpperCase();
-        setText((prev) => {
-          if (PRESET_WORDS.includes(prev)) {
-            return char;
-          }
-          return prev.length >= 12 ? prev.slice(1) + char : prev + char;
-        });
-        if (canvasRef.current) {
-          canvasRef.current.triggerRipple(0.5, 0.5);
-        }
+      if (e.key.length === 1 && /^[a-zA-Z0-9]$/.test(e.key) && inputRef.current) {
+        inputRef.current.focus();
       }
     };
 
@@ -79,7 +83,14 @@ export default function App() {
         themeKey="obsidian"
       />
 
-      <EditorialHeader onReset={handleReset} />
+      <EditorialHeader
+        text={text}
+        onTextChange={handleTextChange}
+        soundEnabled={soundEnabled}
+        onToggleSound={handleToggleSound}
+        onReset={handleReset}
+        inputRef={inputRef}
+      />
 
       <ControlsDock
         text={text}

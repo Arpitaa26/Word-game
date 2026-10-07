@@ -50,6 +50,7 @@ class SoundEngine {
   constructor() {
     this.ctx = null;
     this.enabled = false;
+    this.lastNoteTime = 0;
     this.masterGain = null;
     this.compressor = null;
     this.warmFilter = null;
@@ -174,8 +175,13 @@ class SoundEngine {
     this.ensureContext();
     if (!this.ctx || !this.masterGain) return;
 
+    const now = this.ctx.currentTime;
+    if (this.lastNoteTime && now - this.lastNoteTime < 0.08) {
+      return;
+    }
+    this.lastNoteTime = now;
+
     try {
-      const now = this.ctx.currentTime;
       const ctx = this.ctx;
 
       let f0 = typeof freq === 'number' ? freq : 440;
