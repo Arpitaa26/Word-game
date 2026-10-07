@@ -16,11 +16,7 @@ export function EditorialHeader({ stats }) {
         <div className="brand-group">
           <span className="live-indicator" />
           <h1 className="project-title">LIVING TYPE</h1>
-          <span className="project-tag">EXPERIMENT 01</span>
         </div>
-        <p className="project-subtitle">
-          Soft physical typography & generative viscoelastic simulation
-        </p>
       </div>
 
       <div className="header-right">
