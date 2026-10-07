@@ -4,8 +4,8 @@
 
 **Living Type** is an interactive, GPU-accelerated visual experiment that treats typography as a responsive physical material. Letters stretch, recoil, deform, and ripple under cursor forces, keyboard input, and material physics on a minimal obsidian canvas.
 
-- **Live Demo**: [https://arpitaa26.github.io/Word-game/](https://arpitaa26.github.io/Word-game/)
-- **Repository**: [https://github.com/Arpitaa26/Word-game](https://github.com/Arpitaa26/Word-game)
+- **Live Demo**: [https://arpitaa26.github.io/living-type/](https://arpitaa26.github.io/living-type/)
+- **Repository**: [https://github.com/Arpitaa26/living-type](https://github.com/Arpitaa26/living-type)
 
 ---
 
@@ -96,8 +96,8 @@ flowchart TD
 
 ### Installation
 ```bash
-git clone https://github.com/Arpitaa26/Word-game.git
-cd Word-game
+git clone https://github.com/Arpitaa26/living-type.git
+cd living-type
 npm install
 ```
 
