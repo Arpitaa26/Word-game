@@ -24,7 +24,7 @@ export function EditorialHeader({ stats, text, setText }) {
       <div className="header-left">
         <div className="brand-group">
           <span className="live-indicator" />
-          <h1 className="project-title">LIVING TYPE</h1>
+          <h1 className="project-title">WORD GAME</h1>
         </div>
       </div>
 

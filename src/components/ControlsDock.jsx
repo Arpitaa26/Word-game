@@ -35,7 +35,7 @@ export function ControlsDock({
   ];
 
   return (
-    <nav className="controls-dock" aria-label="Living Type controls">
+    <nav className="controls-dock" aria-label="Word Game controls">
       <div className="dock-section presets-group">
         <span className="dock-label">
           <span>WORDS</span>

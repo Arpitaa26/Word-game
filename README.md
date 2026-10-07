@@ -1,4 +1,4 @@
-# Living Type
+# Word Game
 
 ## Technologies Used
 

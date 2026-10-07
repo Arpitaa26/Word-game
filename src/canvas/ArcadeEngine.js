@@ -333,7 +333,7 @@ export class ArcadeEngine {
     this.spawnCelebrationParticles(140);
 
     const bannerTitle = m >= 1000
-      ? `🏆 ${m.toLocaleString()} PTS! LIVING TYPE MASTER!`
+      ? `🏆 ${m.toLocaleString()} PTS! WORD GAME MASTER!`
       : `🎉 ${m} PTS MILESTONE! ELASTIC PRO!`;
 
     this.addPopup(this.width * 0.5, this.height * 0.32, bannerTitle, '#FFD700', 1.6, 2.5);
