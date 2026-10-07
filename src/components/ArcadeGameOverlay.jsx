@@ -55,7 +55,7 @@ export function ArcadeGameOverlay({
         setLastMilestone(m);
         setTimeout(() => {
           setLastMilestone(null);
-        }, 4500);
+        }, 2200);
       },
       onWordComplete: () => {
         setTimeout(() => {

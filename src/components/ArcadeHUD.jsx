@@ -1,7 +1,7 @@
 import React from 'react';
 import { Target, Zap, Type, RotateCcw, X, Plus, Trophy, Flame, Sparkles } from 'lucide-react';
 
-const MILESTONES = [500, 1000, 1500, 2000, 3000, 5000, 10000];
+const MILESTONES = [2000, 3000, 5000, 10000];
 
 export function ArcadeHUD({
   mode,

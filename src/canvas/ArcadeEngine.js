@@ -2,7 +2,7 @@ import { TextCollisionMap } from './collisionMap';
 import { soundEngine } from './sound';
 
 const STORAGE_KEY = 'living_type_arcade_highscore';
-const MILESTONES = [500, 1000, 1500, 2000, 3000, 5000, 10000];
+const MILESTONES = [2000, 3000, 5000, 10000];
 
 export class ArcadeEngine {
   constructor(canvas, options = {}) {
@@ -52,6 +52,8 @@ export class ArcadeEngine {
     this.particles = [];
     this.popups = [];
     this.celebrationParticles = [];
+    this.announcements = [];
+    this.currentAnnouncement = null;
     this.handledRipples = new Set();
 
     this.wasDragging = false;
@@ -114,6 +116,8 @@ export class ArcadeEngine {
     this.particles = [];
     this.popups = [];
     this.celebrationParticles = [];
+    this.announcements = [];
+    this.currentAnnouncement = null;
     this.collectedLetters = [];
     this.milestonesReached.clear();
     this.handledRipples.clear();
@@ -250,7 +254,15 @@ export class ArcadeEngine {
     }
   }
 
-  addPopup(x, y, textVal, color = '#FFFFFF', scale = 1.0, life = 1.2) {
+  addPopup(x, y, textVal, color = '#FFFFFF', scale = 1.0, life = 1.1) {
+    for (const p of this.popups) {
+      if (Math.abs(p.x - x) < 70 && Math.abs(p.y - y) < 32) {
+        y = p.y - 28;
+      }
+    }
+    if (this.popups.length >= 3) {
+      this.popups.shift();
+    }
     this.popups.push({
       x,
       y,
@@ -258,9 +270,18 @@ export class ArcadeEngine {
       color,
       alpha: 1.0,
       scale,
-      vy: -40,
+      vy: -35,
       life,
     });
+  }
+
+  queueAnnouncement(text, color = '#FFD700', duration = 2.0) {
+    const item = { text, color, life: duration, maxLife: duration };
+    if (!this.currentAnnouncement) {
+      this.currentAnnouncement = item;
+    } else if (this.announcements.length < 3) {
+      this.announcements.push(item);
+    }
   }
 
   addParticles(x, y, count = 12, color = '#FFFFFF') {
@@ -280,7 +301,7 @@ export class ArcadeEngine {
     }
   }
 
-  spawnCelebrationParticles(count = 140) {
+  spawnCelebrationParticles(count = 24) {
     const CELEBRATION_COLORS = [
       '#FFD700',
       '#FF3B30',
@@ -295,20 +316,20 @@ export class ArcadeEngine {
     const w = this.width;
     for (let i = 0; i < count; i++) {
       this.celebrationParticles.push({
-        x: w * (0.05 + Math.random() * 0.9),
-        y: -15 + Math.random() * 30,
-        vx: (Math.random() - 0.5) * 320,
-        vy: Math.random() * -180 - 40,
-        gravity: Math.random() * 60 + 90,
+        x: w * (0.15 + Math.random() * 0.7),
+        y: -10 + Math.random() * 20,
+        vx: (Math.random() - 0.5) * 180,
+        vy: Math.random() * -90 - 30,
+        gravity: Math.random() * 45 + 65,
         wobble: Math.random() * 10,
-        wobbleSpeed: Math.random() * 3.5 + 2.5,
+        wobbleSpeed: Math.random() * 3.0 + 2.0,
         rotation: Math.random() * Math.PI * 2,
-        rotSpeed: (Math.random() - 0.5) * 7,
-        size: Math.random() * 7 + 5,
+        rotSpeed: (Math.random() - 0.5) * 5,
+        size: Math.random() * 4 + 3.5,
         aspect: Math.random() * 0.5 + 0.4,
         color: CELEBRATION_COLORS[Math.floor(Math.random() * CELEBRATION_COLORS.length)],
-        life: Math.random() * 1.5 + 3.2,
-        maxLife: 4.5,
+        life: Math.random() * 0.8 + 1.8,
+        maxLife: 2.6,
         opacity: 1.0,
       });
     }
@@ -337,13 +358,10 @@ export class ArcadeEngine {
 
   triggerMilestone(m) {
     soundEngine.playMilestone(m);
-    this.spawnCelebrationParticles(140);
+    this.spawnCelebrationParticles(24);
 
-    const bannerTitle = m >= 1000
-      ? `🏆 ${m.toLocaleString()} PTS! WORD GAME MASTER!`
-      : `🎉 ${m} PTS MILESTONE! ELASTIC PRO!`;
-
-    this.addPopup(this.width * 0.5, this.height * 0.32, bannerTitle, '#FFD700', 1.6, 2.5);
+    const bannerTitle = `🎉 CONGRATULATIONS! ${m.toLocaleString()} PTS!`;
+    this.queueAnnouncement(bannerTitle, '#FFD700', 2.2);
 
     if (this.options.onMilestoneReached) {
       this.options.onMilestoneReached(m);
@@ -376,10 +394,10 @@ export class ArcadeEngine {
         const totalChars = (this.options.text || 'CREATE').length;
         if (this.collectedLetters.length >= totalChars) {
           soundEngine.playWordComplete();
-          this.spawnCelebrationParticles(180);
+          this.spawnCelebrationParticles(30);
           const wordBonus = 2500 * nextCombo;
           this.addScore(wordBonus);
-          this.addPopup(this.width * 0.5, this.height * 0.4, `WORD COMPLETE! +${wordBonus}`, '#FFD700', 1.6, 2.5);
+          this.queueAnnouncement(`WORD COMPLETE! +${wordBonus}`, '#FFD700', 2.2);
 
           if (this.options.onWordComplete) {
             this.options.onWordComplete();
@@ -415,13 +433,10 @@ export class ArcadeEngine {
       const currentTier = Math.floor(this.gameSpeed * 5) / 5;
       if (currentTier > this.lastSpeedTier && currentTier >= 1.2) {
         this.lastSpeedTier = currentTier;
-        this.addPopup(
-          this.width * 0.5,
-          this.height * 0.36,
+        this.queueAnnouncement(
           `⚡ SPEED UP! ${currentTier.toFixed(1)}X`,
           '#00F0FF',
-          1.5,
-          2.0
+          1.8
         );
         soundEngine.playPianoNote(880.00, 0.85, 1.2);
         setTimeout(() => {
@@ -461,7 +476,6 @@ export class ArcadeEngine {
               const rx = r.x * w;
               const ry = r.y * h;
               this.addParticles(rx, ry, 14, this.options.themeKey === 'alabaster' ? '#333' : '#FFF');
-              this.addPopup(rx, ry - 20, 'SHOCKWAVE!', this.options.themeKey === 'alabaster' ? '#111' : '#FFF');
 
               this.orbs.forEach((orb) => {
                 const dx = orb.x - rx;
@@ -511,7 +525,6 @@ export class ArcadeEngine {
 
           soundEngine.playSlingshotLaunch(Math.min(dragDistPx / 15, 12));
           this.spawnOrb(launchX, launchY, aimVx, aimVy, true);
-          this.addPopup(launchX, launchY - 25, 'MAX SPEED SNAP!', '#00F0FF', 1.6, 2.0);
           this.addParticles(launchX, launchY, 16, this.options.themeKey === 'alabaster' ? '#00A0B0' : '#00F0FF');
 
           this.orbs.forEach((orb) => {
@@ -897,6 +910,15 @@ export class ArcadeEngine {
       return pop.alpha > 0;
     });
 
+    if (this.currentAnnouncement) {
+      this.currentAnnouncement.life -= dt;
+      if (this.currentAnnouncement.life <= 0) {
+        this.currentAnnouncement = this.announcements.shift() || null;
+      }
+    } else if (this.announcements.length > 0) {
+      this.currentAnnouncement = this.announcements.shift();
+    }
+
     this.celebrationParticles = this.celebrationParticles.filter((c) => {
       c.life -= dt;
       if (c.life <= 0) return false;
@@ -1093,6 +1115,25 @@ export class ArcadeEngine {
       ctx.fillText(pop.text, 0, 0);
       ctx.restore();
     });
+
+    if (this.currentAnnouncement) {
+      const ann = this.currentAnnouncement;
+      ctx.save();
+      ctx.translate(w * 0.5, h * 0.32);
+      const progress = 1.0 - (ann.life / ann.maxLife);
+      const enterAlpha = Math.min(progress / 0.15, 1.0);
+      const exitAlpha = Math.min(ann.life / 0.25, 1.0);
+      const alpha = Math.min(enterAlpha, exitAlpha);
+      const pulse = 1.0 + Math.sin(progress * Math.PI) * 0.08;
+      ctx.scale(pulse, pulse);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = ann.color;
+      ctx.font = '700 16px "Space Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ann.text, 0, 0);
+      ctx.restore();
+    }
 
     ctx.restore();
   }
