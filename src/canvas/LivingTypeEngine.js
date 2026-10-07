@@ -334,6 +334,7 @@ export class LivingTypeEngine {
     if (this.text !== newText) {
       this.text = newText;
       this.updateOffscreenText();
+      this.triggerRipple(0.5, 0.5, { amplitude: 0.045, speed: 0.35 });
     }
   }
 
@@ -348,6 +349,10 @@ export class LivingTypeEngine {
     if (MATERIAL_PRESETS[key]) {
       this.materialKey = key;
       this.material = MATERIAL_PRESETS[key];
+      this.triggerRipple(0.5, 0.5, {
+        speed: this.material.rippleSpeed,
+        amplitude: this.material.rippleAmp * 0.8,
+      });
     }
   }
 
@@ -454,15 +459,15 @@ export class LivingTypeEngine {
       const coords = this.getNormalizedCoords(e);
       this.isDragging = false;
 
-      if (this.dragMovedDistance < 0.015) {
+      if (this.dragMovedDistance < 0.012) {
         this.triggerRipple(coords.x, coords.y);
         this.dragOffset = { x: 0, y: 0 };
         this.dragVelocity = { x: 0, y: 0 };
         this.isRecoiling = false;
       } else {
         this.isRecoiling = true;
-        this.dragVelocity.x = this.pointerVel.x * 0.5;
-        this.dragVelocity.y = this.pointerVel.y * 0.5;
+        this.dragVelocity.x = -this.dragOffset.x * 6.5 + this.pointerVel.x * 0.3;
+        this.dragVelocity.y = -this.dragOffset.y * 6.5 + this.pointerVel.y * 0.3;
         soundEngine.playRelease(Math.hypot(this.pointerVel.x, this.pointerVel.y));
       }
     }

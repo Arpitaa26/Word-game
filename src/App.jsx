@@ -2,46 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { LivingCanvas } from './components/LivingCanvas';
 import { EditorialHeader } from './components/EditorialHeader';
 import { ControlsDock } from './components/ControlsDock';
-import { InteractionGuide } from './components/InteractionGuide';
-import { ArcadeGameOverlay } from './components/ArcadeGameOverlay';
-import { FloatingArcadeTrigger } from './components/FloatingArcadeTrigger';
 import './styles/living-type.css';
 
-const STORAGE_KEY = 'living_type_arcade_highscore';
+const PRESET_WORDS = ['CREATE', 'ELASTIC', 'KINETIC', 'DODO', 'FORM'];
 
 export default function App() {
   const [text, setText] = useState('CREATE');
-  const [fontFamily, setFontFamily] = useState('Syne');
   const [materialKey, setMaterialKey] = useState('silicone');
-  const [themeKey, setThemeKey] = useState('obsidian');
-  const [isArcadeMode, setIsArcadeMode] = useState(false);
-  const [highScore] = useState(() => {
-    try {
-      return parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
-    } catch {
-      return 0;
-    }
-  });
-  const [stats, setStats] = useState({
-    fps: 60,
-    state: 'Resting',
-    ripples: 0,
-    strain: '0.0',
-  });
-  const [hasInteracted, setHasInteracted] = useState(false);
-
   const canvasRef = useRef(null);
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', themeKey);
-  }, [themeKey]);
-
-  const handleStatsUpdate = useCallback((newStats) => {
-    setStats(newStats);
-    if (newStats.state !== 'Resting') {
-      setHasInteracted(true);
-    }
-  }, []);
 
   const handleReset = useCallback(() => {
     setText('CREATE');
@@ -51,74 +19,73 @@ export default function App() {
     }
   }, []);
 
+  const handleSelectWord = useCallback((newWord) => {
+    setText(newWord);
+    if (canvasRef.current) {
+      canvasRef.current.triggerRipple(0.5, 0.5);
+    }
+  }, []);
+
+  const handleSelectMaterial = useCallback((key) => {
+    setMaterialKey(key);
+    if (canvasRef.current) {
+      canvasRef.current.triggerRipple(0.5, 0.5);
+    }
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
-        if (e.key === 'Escape') {
-          e.target.blur();
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        setText((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
+        if (canvasRef.current) {
+          canvasRef.current.triggerRipple(0.5, 0.5);
         }
         return;
       }
 
-      if (e.key.toLowerCase() === 'r' && !isArcadeMode) {
+      if (e.key.toLowerCase() === 'r' && (e.shiftKey || e.key === 'Escape')) {
         handleReset();
+        return;
+      }
+
+      if (e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
+        const char = e.key.toUpperCase();
+        setText((prev) => {
+          if (PRESET_WORDS.includes(prev)) {
+            return char;
+          }
+          return prev.length >= 12 ? prev.slice(1) + char : prev + char;
+        });
+        if (canvasRef.current) {
+          canvasRef.current.triggerRipple(0.5, 0.5);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleReset, isArcadeMode]);
+  }, [handleReset]);
 
   return (
-    <main className={`app-container ${isArcadeMode ? 'arcade-active' : ''}`} data-theme={themeKey}>
+    <main className="app-container" data-theme="obsidian">
       <LivingCanvas
         ref={canvasRef}
         text={text}
-        fontFamily={fontFamily}
+        fontFamily="Syne"
         materialKey={materialKey}
-        themeKey={themeKey}
-        onStatsUpdate={handleStatsUpdate}
+        themeKey="obsidian"
       />
 
-      <EditorialHeader
-        stats={stats}
-        themeKey={themeKey}
-        text={text}
-        setText={setText}
-      />
-
-      {isArcadeMode && (
-        <ArcadeGameOverlay
-          engineRef={canvasRef}
-          text={text}
-          setText={setText}
-          themeKey={themeKey}
-          onClose={() => setIsArcadeMode(false)}
-        />
-      )}
-
-      {!isArcadeMode && (
-        <FloatingArcadeTrigger
-          onClick={() => setIsArcadeMode(true)}
-          highScore={highScore}
-          themeKey={themeKey}
-        />
-      )}
-
-      {!isArcadeMode && <InteractionGuide hasInteracted={hasInteracted} />}
+      <EditorialHeader onReset={handleReset} />
 
       <ControlsDock
         text={text}
-        setText={setText}
-        fontFamily={fontFamily}
-        setFontFamily={setFontFamily}
+        setText={handleSelectWord}
         materialKey={materialKey}
-        setMaterialKey={setMaterialKey}
-        themeKey={themeKey}
-        setThemeKey={setThemeKey}
-        onReset={handleReset}
-        isArcadeMode={isArcadeMode}
-        setIsArcadeMode={setIsArcadeMode}
+        setMaterialKey={handleSelectMaterial}
       />
     </main>
   );
