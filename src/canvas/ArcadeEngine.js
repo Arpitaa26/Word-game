@@ -162,11 +162,11 @@ export class ArcadeEngine {
       const count = chars.length;
       for (let i = 0; i < count; i++) {
         const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-      const baseSpan = Math.min(w, h);
-      const rx = Math.min(w * 0.38, baseSpan * 0.44);
-      const ry = Math.min(h * 0.28, baseSpan * 0.38);
-      const cx = w * 0.5 + Math.cos(angle) * rx;
-      const cy = h * 0.5 + Math.sin(angle) * ry;
+        const baseSpan = Math.min(w, h);
+        const rx = Math.min(w * 0.38, baseSpan * 0.44);
+        const ry = Math.min(h * 0.28, baseSpan * 0.38);
+        const cx = w * 0.5 + Math.cos(angle) * rx;
+        const cy = h * 0.5 + Math.sin(angle) * ry;
 
         this.targets.push({
           id: i,
@@ -175,11 +175,15 @@ export class ArcadeEngine {
           letterIndex: i,
           x: cx,
           y: cy,
+          vx: (Math.random() - 0.5) * 120,
+          vy: (Math.random() - 0.5) * 120,
+          mass: 1.2,
           radius: 25,
           angle,
           orbitSpeed: 0.10,
           color: isAlabaster ? '#0A0A0C' : '#FFFFFF',
           isHit: false,
+          respawnTimer: 0,
         });
       }
     } else {
@@ -199,6 +203,9 @@ export class ArcadeEngine {
           points: isStar ? 300 : (isGold ? 150 : 75),
           x: cx,
           y: cy,
+          vx: (Math.random() - 0.5) * 140,
+          vy: (Math.random() - 0.5) * 140,
+          mass: isStar ? 1.4 : (isGold ? 1.2 : 1.0),
           radius: isStar ? 24 : (isGold ? 22 : 20),
           angle,
           orbitSpeed: (0.07 + (i % 3) * 0.03) * (i % 2 === 0 ? 1 : -1),
@@ -345,7 +352,7 @@ export class ArcadeEngine {
 
   triggerTargetHit(tgt, hitX, hitY, isWave = false) {
     tgt.isHit = true;
-    tgt.respawnTimer = this.mode === 'spell' ? 9999 : 2.5;
+    tgt.respawnTimer = this.mode === 'spell' ? 9999 : 1.2;
 
     const nextCombo = Math.min(this.combo + 1, 10);
     this.combo = nextCombo;
@@ -468,11 +475,17 @@ export class ArcadeEngine {
               });
 
               this.targets.forEach((tgt) => {
-                if (tgt.isHit) return;
                 const dx = tgt.x - rx;
                 const dy = tgt.y - ry;
-                const dist = Math.hypot(dx, dy);
-                if (dist < tgt.radius + 50) {
+                const dist = Math.hypot(dx, dy) || 1;
+                const blastRadius = w * 0.46;
+                if (dist < blastRadius) {
+                  const force = (1.0 - dist / blastRadius) * 580;
+                  tgt.vx += (dx / dist) * force;
+                  tgt.vy += (dy / dist) * force;
+                }
+
+                if (!tgt.isHit && dist < tgt.radius + 55) {
                   this.triggerTargetHit(tgt, tgt.x, tgt.y, true);
                 }
               });
@@ -508,6 +521,16 @@ export class ArcadeEngine {
             if (dist < this.width * 0.35) {
               orb.vx += aimVx * 0.7;
               orb.vy += aimVy * 0.7;
+            }
+          });
+
+          this.targets.forEach((tgt) => {
+            const dx = tgt.x - launchX;
+            const dy = tgt.y - launchY;
+            const dist = Math.hypot(dx, dy);
+            if (dist < this.width * 0.35) {
+              tgt.vx += aimVx * 0.5;
+              tgt.vy += aimVy * 0.5;
             }
           });
         }
@@ -547,12 +570,109 @@ export class ArcadeEngine {
       }
     }
 
+    const dragOffsetX = engine?.dragOffset?.x || 0;
+    const dragOffsetY = engine?.dragOffset?.y || 0;
+    const dragVelX = (engine?.dragVelocity?.x || 0) * this.width;
+    const dragVelY = (engine?.dragVelocity?.y || 0) * this.height;
+
+    const simDt = dt * this.gameSpeed;
+    const gravity = (this.mode === 'pinball' ? 140 : 80) * (0.85 + this.gameSpeed * 0.15);
+
     this.targets.forEach((tgt) => {
-      const baseSpan = Math.min(this.width, this.height);
-      const rx = Math.min(this.width * (this.mode === 'spell' ? 0.36 : 0.34), baseSpan * 0.44);
-      const ry = Math.min(this.height * (this.mode === 'spell' ? 0.28 : 0.26), baseSpan * 0.38);
-      tgt.x = this.width * 0.5 + Math.cos(tgt.angle) * rx;
-      tgt.y = this.height * 0.5 + Math.sin(tgt.angle) * ry;
+      tgt.vy += (gravity * 0.7) * simDt;
+
+      if (engine?.isRecoiling || engine?.isDragging) {
+        tgt.vx += dragVelX * 0.4;
+        tgt.vy += dragVelY * 0.4;
+      }
+
+      if (engine?.isPointerInside && engine?.pointer) {
+        const px = engine.pointer.x * this.width;
+        const py = engine.pointer.y * this.height;
+        const pDist = Math.hypot(tgt.x - px, tgt.y - py);
+        const touchRadius = tgt.radius + 36;
+        if (pDist < touchRadius && pDist > 0.001) {
+          const pnx = (tgt.x - px) / pDist;
+          const pny = (tgt.y - py) / pDist;
+          const pushForce = (1.0 - pDist / touchRadius) * 450;
+          tgt.vx += pnx * pushForce;
+          tgt.vy += pny * pushForce;
+        }
+      }
+
+      const currentSpeed = Math.hypot(tgt.vx, tgt.vy);
+      if (currentSpeed > 450) {
+        tgt.vx *= 0.99;
+        tgt.vy *= 0.99;
+      }
+
+      tgt.x += tgt.vx * simDt;
+      tgt.y += tgt.vy * simDt;
+
+      const pad = tgt.radius + 8;
+      if (tgt.x < pad) {
+        tgt.x = pad;
+        tgt.vx = Math.max(Math.abs(tgt.vx) * 0.92, 120);
+      } else if (tgt.x > this.width - pad) {
+        tgt.x = this.width - pad;
+        tgt.vx = -Math.max(Math.abs(tgt.vx) * 0.92, 120);
+      }
+
+      if (tgt.y < pad + 60) {
+        tgt.y = pad + 60;
+        tgt.vy = Math.max(Math.abs(tgt.vy) * 0.92, 100);
+      } else if (tgt.y > this.height - pad - 60) {
+        tgt.y = this.height - pad - 60;
+        tgt.vy = -Math.max(Math.abs(tgt.vy) * 0.95, 210);
+        if (Math.abs(tgt.vx) < 40) {
+          tgt.vx = (Math.random() - 0.5) * 160;
+        }
+      }
+
+      const normX = tgt.x / this.width;
+      const normY = tgt.y / this.height;
+      const normRadius = tgt.radius / this.width;
+
+      const col = this.collisionMap.testCircle(normX, normY, normRadius, dragOffsetX, dragOffsetY);
+      if (col.hit && col.normal) {
+        tgt.x += col.normal.x * (col.depth * this.width + 1.5);
+        tgt.y += col.normal.y * (col.depth * this.height + 1.5);
+
+        const vdotn = tgt.vx * col.normal.x + tgt.vy * col.normal.y;
+        if (vdotn < 0) {
+          tgt.vx -= 1.8 * vdotn * col.normal.x;
+          tgt.vy -= 1.8 * vdotn * col.normal.y;
+
+          if (engine?.isRecoiling || engine?.isDragging) {
+            tgt.vx += dragVelX * 1.2;
+            tgt.vy += dragVelY * 1.2;
+          }
+
+          this.addParticles(tgt.x, tgt.y, 4, tgt.color);
+        } else {
+          tgt.vx += col.normal.x * 120 + (Math.random() - 0.5) * 60;
+          tgt.vy += col.normal.y * 120 - 60;
+        }
+      }
+
+      const postSpeed = Math.hypot(tgt.vx, tgt.vy);
+      const minCruisingSpeed = (this.mode === 'pinball' ? 140 : 110) * (0.9 + this.gameSpeed * 0.12);
+      const maxSpeed = 1200 * this.gameSpeed;
+
+      if (postSpeed < minCruisingSpeed) {
+        if (postSpeed > 0.1) {
+          const boost = minCruisingSpeed / postSpeed;
+          tgt.vx *= boost;
+          tgt.vy *= boost;
+        } else {
+          tgt.vx = (Math.random() - 0.5) * 160;
+          tgt.vy = -160;
+        }
+      } else if (postSpeed > maxSpeed) {
+        const clamp = maxSpeed / postSpeed;
+        tgt.vx *= clamp;
+        tgt.vy *= clamp;
+      }
 
       if (tgt.respawnTimer > 0) {
         tgt.respawnTimer -= dt;
@@ -562,13 +682,38 @@ export class ArcadeEngine {
       }
     });
 
-    const dragOffsetX = engine?.dragOffset?.x || 0;
-    const dragOffsetY = engine?.dragOffset?.y || 0;
-    const dragVelX = (engine?.dragVelocity?.x || 0) * this.width;
-    const dragVelY = (engine?.dragVelocity?.y || 0) * this.height;
+    const targetCount = this.targets.length;
+    for (let i = 0; i < targetCount; i++) {
+      const tgtA = this.targets[i];
+      if (tgtA.isHit && this.mode === 'spell') continue;
+      for (let j = i + 1; j < targetCount; j++) {
+        const tgtB = this.targets[j];
+        if (tgtB.isHit && this.mode === 'spell') continue;
+        const dx = tgtB.x - tgtA.x;
+        const dy = tgtB.y - tgtA.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = tgtA.radius + tgtB.radius;
+        if (dist < minDist && dist > 0.001) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const overlap = minDist - dist + 1.0;
+          tgtA.x -= nx * overlap * 0.5;
+          tgtA.y -= ny * overlap * 0.5;
+          tgtB.x += nx * overlap * 0.5;
+          tgtB.y += ny * overlap * 0.5;
 
-    const simDt = dt * this.gameSpeed;
-    const gravity = (this.mode === 'pinball' ? 140 : 80) * (0.85 + this.gameSpeed * 0.15);
+          const kx = tgtA.vx - tgtB.vx;
+          const ky = tgtA.vy - tgtB.vy;
+          const p = nx * kx + ny * ky;
+          if (p > 0) {
+            tgtA.vx -= p * nx * 1.05;
+            tgtA.vy -= p * ny * 1.05;
+            tgtB.vx += p * nx * 1.05;
+            tgtB.vy += p * ny * 1.05;
+          }
+        }
+      }
+    }
 
     this.orbs = this.orbs.filter((orb) => {
       orb.life -= dt;
@@ -690,22 +835,49 @@ export class ArcadeEngine {
       }
 
       this.targets.forEach((tgt) => {
-        if (tgt.isHit) return;
+        if (tgt.isHit && this.mode === 'spell') return;
         const dx = tgt.x - orb.x;
         const dy = tgt.y - orb.y;
         const dist = Math.hypot(dx, dy);
+        const minDist = tgt.radius + orb.radius;
 
-        if (dist < tgt.radius + orb.radius) {
-          const nx = dx / (dist || 1);
-          const ny = dy / (dist || 1);
-          const dot = orb.vx * nx + orb.vy * ny;
-          orb.vx -= 1.6 * dot * nx;
-          orb.vy -= 1.6 * dot * ny;
+        if (dist < minDist && dist > 0.001) {
+          const nx = dx / dist;
+          const ny = dy / dist;
 
-          orb.vx -= nx * 90;
-          orb.vy -= ny * 90;
+          const orbMass = 1.0;
+          const tgtMass = tgt.mass || 1.2;
+          const totalMass = orbMass + tgtMass;
 
-          this.triggerTargetHit(tgt, tgt.x, tgt.y, false);
+          const relVx = orb.vx - tgt.vx;
+          const relVy = orb.vy - tgt.vy;
+          const normalVel = relVx * nx + relVy * ny;
+
+          const overlap = minDist - dist + 2.0;
+          orb.x -= nx * overlap * 0.45;
+          orb.y -= ny * overlap * 0.45;
+          tgt.x += nx * overlap * 0.55;
+          tgt.y += ny * overlap * 0.55;
+
+          if (normalVel > 0) {
+            const restitution = 1.45;
+            const impulse = (normalVel * (1 + restitution)) / totalMass;
+
+            orb.vx -= impulse * tgtMass * nx;
+            orb.vy -= impulse * tgtMass * ny;
+
+            tgt.vx += impulse * orbMass * nx + nx * 220;
+            tgt.vy += impulse * orbMass * ny + ny * 220;
+          } else {
+            orb.vx -= nx * 140;
+            orb.vy -= ny * 140;
+            tgt.vx += nx * 200;
+            tgt.vy += ny * 200;
+          }
+
+          if (!tgt.isHit) {
+            this.triggerTargetHit(tgt, tgt.x, tgt.y, false);
+          }
         }
       });
     });
@@ -803,9 +975,12 @@ export class ArcadeEngine {
     }
 
     this.targets.forEach((tgt) => {
-      if (tgt.isHit) return;
+      if (tgt.isHit && this.mode === 'spell') return;
 
       ctx.save();
+      if (tgt.isHit) {
+        ctx.globalAlpha = 0.55 + Math.sin(performance.now() * 0.02) * 0.25;
+      }
       ctx.translate(tgt.x, tgt.y);
 
       if (tgt.type === 'letter') {
