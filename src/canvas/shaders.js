@@ -94,7 +94,7 @@ export const FRAGMENT_SHADER_SOURCE = `
 
         // Viscous wake from pointer velocity
         vec2 vel_aspect = vec2(u_pointer_vel.x * aspect, u_pointer_vel.y);
-        hover_disp += vel_aspect * falloff * 0.18;
+        hover_disp += vel_aspect * falloff * 0.10;
       }
     }
 

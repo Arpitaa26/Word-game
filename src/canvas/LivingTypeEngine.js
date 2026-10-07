@@ -8,15 +8,15 @@ export const MATERIAL_PRESETS = {
     hoverStrength: 0.045,
     hoverRadius: 0.35,
     dragRadius: 0.42,
-    springStiffness: 140.0,
-    springDamping: 11.5,
-    rippleSpeed: 0.72,
+    springStiffness: 85.0,
+    springDamping: 9.0,
+    rippleSpeed: 0.40,
     rippleAmp: 0.048,
-    rippleFreq: 30.0,
-    rippleDecay: 2.3,
-    rippleWidth: 0.12,
-    idleSpeed: 1.0,
-    idleAmp: 1.0,
+    rippleFreq: 26.0,
+    rippleDecay: 1.4,
+    rippleWidth: 0.13,
+    idleSpeed: 0.50,
+    idleAmp: 0.85,
     chromaticDispersion: 1.0,
     sheen: 0.75,
   },
@@ -26,15 +26,15 @@ export const MATERIAL_PRESETS = {
     hoverStrength: 0.068,
     hoverRadius: 0.45,
     dragRadius: 0.50,
-    springStiffness: 65.0,
-    springDamping: 7.5,
-    rippleSpeed: 0.55,
+    springStiffness: 42.0,
+    springDamping: 6.0,
+    rippleSpeed: 0.30,
     rippleAmp: 0.075,
-    rippleFreq: 22.0,
-    rippleDecay: 1.4,
-    rippleWidth: 0.16,
-    idleSpeed: 1.3,
-    idleAmp: 1.5,
+    rippleFreq: 20.0,
+    rippleDecay: 0.95,
+    rippleWidth: 0.17,
+    idleSpeed: 0.60,
+    idleAmp: 1.2,
     chromaticDispersion: 1.4,
     sheen: 0.9,
   },
@@ -44,15 +44,15 @@ export const MATERIAL_PRESETS = {
     hoverStrength: 0.032,
     hoverRadius: 0.26,
     dragRadius: 0.32,
-    springStiffness: 280.0,
-    springDamping: 18.0,
-    rippleSpeed: 0.95,
+    springStiffness: 160.0,
+    springDamping: 14.0,
+    rippleSpeed: 0.52,
     rippleAmp: 0.035,
-    rippleFreq: 40.0,
-    rippleDecay: 3.5,
-    rippleWidth: 0.09,
-    idleSpeed: 0.7,
-    idleAmp: 0.6,
+    rippleFreq: 34.0,
+    rippleDecay: 2.2,
+    rippleWidth: 0.10,
+    idleSpeed: 0.40,
+    idleAmp: 0.55,
     chromaticDispersion: 0.6,
     sheen: 0.5,
   },
@@ -393,7 +393,7 @@ export class LivingTypeEngine {
       frequency: customOpts.frequency || mat.rippleFreq,
       decay: customOpts.decay || mat.rippleDecay,
       width: customOpts.width || mat.rippleWidth,
-      duration: 2.2,
+      duration: 3.2,
     };
 
     // Keep bounded array
@@ -538,8 +538,8 @@ export class LivingTypeEngine {
     if (dt <= 0) return;
 
     // 1. Pointer Spring Smoothing & Velocity Tracking
-    const springK = 35.0;
-    const dampingC = 8.5;
+    const springK = 20.0;
+    const dampingC = 6.8;
 
     const fx = (this.pointer.x - this.smoothPointer.x) * springK - this.smoothPointer.vx * dampingC;
     const fy = (this.pointer.y - this.smoothPointer.y) * springK - this.smoothPointer.vy * dampingC;
@@ -552,13 +552,13 @@ export class LivingTypeEngine {
     // Pointer velocity in normalized UV units per second
     const rawVx = (this.pointer.x - this.prevPointer.x) / dt;
     const rawVy = (this.pointer.y - this.prevPointer.y) / dt;
-    this.pointerVel.x += (rawVx - this.pointerVel.x) * Math.min(dt * 15, 1);
-    this.pointerVel.y += (rawVy - this.pointerVel.y) * Math.min(dt * 15, 1);
+    this.pointerVel.x += (rawVx - this.pointerVel.x) * Math.min(dt * 8, 1);
+    this.pointerVel.y += (rawVy - this.pointerVel.y) * Math.min(dt * 8, 1);
     this.prevPointer = { ...this.pointer };
 
     // Smooth entry and exit of pointer influence (resting return)
     const targetActive = this.isPointerInside ? 1.0 : 0.0;
-    this.pointerActive += (targetActive - this.pointerActive) * Math.min(dt * 8.0, 1.0);
+    this.pointerActive += (targetActive - this.pointerActive) * Math.min(dt * 3.8, 1.0);
 
     // 2. Drag Spring Recoil Simulation (Damped Harmonic Oscillator)
     if (this.isRecoiling) {
