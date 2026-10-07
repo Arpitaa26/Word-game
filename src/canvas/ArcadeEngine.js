@@ -483,25 +483,31 @@ export class ArcadeEngine {
 
       if (this.wasDragging && !engine.isDragging) {
         const dragDist = Math.hypot(this.dragOffset.x, this.dragOffset.y);
-        if (dragDist > 0.02) {
-          const aimVx = -this.dragOffset.x * 1250;
-          const aimVy = -this.dragOffset.y * 1250;
+        const pixelDragX = this.dragOffset.x * this.width;
+        const pixelDragY = this.dragOffset.y * this.height;
+        const dragDistPx = Math.hypot(pixelDragX, pixelDragY);
+
+        if (dragDist > 0.015 || dragDistPx > 15) {
+          const launchSpeed = Math.min(Math.max(dragDistPx * 15.0, 1600), 3400) * (1.0 + (this.gameSpeed - 1.0) * 0.45);
+          const aimAngle = Math.atan2(-pixelDragY, -pixelDragX);
+          const aimVx = Math.cos(aimAngle) * launchSpeed;
+          const aimVy = Math.sin(aimAngle) * launchSpeed;
+
           const launchX = (this.dragStart.x + this.dragOffset.x) * this.width;
           const launchY = (this.dragStart.y + this.dragOffset.y) * this.height;
 
-          const launchSpeedBonus = 1.0 + (this.gameSpeed - 1.0) * 0.35;
-          soundEngine.playSlingshotLaunch(dragDist * 10);
-          this.spawnOrb(launchX, launchY, aimVx * launchSpeedBonus, aimVy * launchSpeedBonus, true);
-          this.addPopup(launchX, launchY - 25, 'SLINGSHOT SNAP!', this.options.themeKey === 'alabaster' ? '#111' : '#FFF');
-          this.addParticles(launchX, launchY, 12, this.options.themeKey === 'alabaster' ? '#222' : '#FFF');
+          soundEngine.playSlingshotLaunch(Math.min(dragDistPx / 15, 12));
+          this.spawnOrb(launchX, launchY, aimVx, aimVy, true);
+          this.addPopup(launchX, launchY - 25, 'MAX SPEED SNAP!', '#00F0FF', 1.6, 2.0);
+          this.addParticles(launchX, launchY, 16, this.options.themeKey === 'alabaster' ? '#00A0B0' : '#00F0FF');
 
           this.orbs.forEach((orb) => {
             const dx = orb.x - launchX;
             const dy = orb.y - launchY;
             const dist = Math.hypot(dx, dy);
-            if (dist < this.width * 0.3) {
-              orb.vx += aimVx * 0.6;
-              orb.vy += aimVy * 0.6;
+            if (dist < this.width * 0.35) {
+              orb.vx += aimVx * 0.7;
+              orb.vy += aimVy * 0.7;
             }
           });
         }
@@ -605,7 +611,7 @@ export class ArcadeEngine {
       orb.vy += gravity * simDt;
 
       const currentSpeed = Math.hypot(orb.vx, orb.vy);
-      if (currentSpeed > 500) {
+      if (currentSpeed > 500 && !orb.isProjectile) {
         orb.vx *= 0.99;
         orb.vy *= 0.99;
       }
@@ -666,7 +672,7 @@ export class ArcadeEngine {
 
       const postSpeed = Math.hypot(orb.vx, orb.vy);
       const minCruisingSpeed = (this.mode === 'pinball' ? 200 : 160) * (0.9 + this.gameSpeed * 0.15);
-      const maxSpeed = 750 * this.gameSpeed;
+      const maxSpeed = orb.isProjectile ? 3600 : (1200 * this.gameSpeed);
 
       if (postSpeed < minCruisingSpeed) {
         if (postSpeed > 0.1) {
@@ -756,35 +762,44 @@ export class ArcadeEngine {
       const pullY = (engine.dragStart.y + this.dragOffset.y) * h;
       const pullDist = Math.hypot(this.dragOffset.x * w, this.dragOffset.y * h);
 
-      const aimX = startX - (pullX - startX) * 2.2;
-      const aimY = startY - (pullY - startY) * 2.2;
+      const aimMultiplier = Math.max(pullDist * 0.02, 2.6);
+      const aimX = startX - (pullX - startX) * aimMultiplier;
+      const aimY = startY - (pullY - startY) * aimMultiplier;
+
+      ctx.beginPath();
+      ctx.arc(startX, startY, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = isAlabaster ? '#0A0A0C' : '#FFFFFF';
+      ctx.fill();
 
       ctx.beginPath();
       ctx.moveTo(startX, startY);
       ctx.quadraticCurveTo(startX, pullY, pullX, pullY);
-      ctx.strokeStyle = `${mainStroke}0.65)`;
-      ctx.lineWidth = Math.min(Math.max(pullDist * 0.04, 2), 5);
+      ctx.strokeStyle = `${mainStroke}0.7)`;
+      ctx.lineWidth = Math.min(Math.max(pullDist * 0.04, 2), 6);
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.setLineDash([5, 7]);
+      ctx.setLineDash([6, 8]);
       ctx.moveTo(pullX, pullY);
       ctx.lineTo(aimX, aimY);
-      ctx.strokeStyle = `${mainStroke}0.85)`;
-      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = `${mainStroke}0.9)`;
+      ctx.lineWidth = 2;
       ctx.stroke();
       ctx.setLineDash([]);
 
       ctx.beginPath();
-      ctx.arc(aimX, aimY, 7 + Math.sin(performance.now() * 0.008) * 2.5, 0, Math.PI * 2);
-      ctx.strokeStyle = `${mainStroke}0.9)`;
-      ctx.lineWidth = 1.5;
+      ctx.arc(aimX, aimY, 8 + Math.sin(performance.now() * 0.008) * 3, 0, Math.PI * 2);
+      ctx.strokeStyle = '#00F0FF';
+      ctx.lineWidth = 1.8;
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.arc(pullX, pullY, 6, 0, Math.PI * 2);
+      ctx.arc(pullX, pullY, 13, 0, Math.PI * 2);
       ctx.fillStyle = isAlabaster ? '#0A0A0C' : '#FFFFFF';
       ctx.fill();
+      ctx.strokeStyle = isAlabaster ? '#333' : '#E2DFD7';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
     }
 
     this.targets.forEach((tgt) => {
