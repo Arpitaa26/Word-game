@@ -72,7 +72,7 @@ export function ControlsDock({
       {/* 2. Material Selector */}
       <div className="dock-section material-group">
         <span className="dock-label">
-          <Layers size={13} className="dock-icon" />
+          <Layers size={15} className="dock-icon" />
           <span>MATERIAL</span>
         </span>
         <div className="segmented-control">
@@ -95,7 +95,7 @@ export function ControlsDock({
       {/* 3. Typography Family Selector */}
       <div className="dock-section font-group">
         <span className="dock-label">
-          <Type size={13} className="dock-icon" />
+          <Type size={15} className="dock-icon" />
           <span>TYPEFACE</span>
         </span>
         <div className="segmented-control">
@@ -119,11 +119,11 @@ export function ControlsDock({
         <button
           type="button"
           onClick={handleThemeToggle}
-          className="dock-action-btn"
+          className="dock-action-btn theme-toggle-btn"
           title={`Switch to ${themeKey === 'obsidian' ? 'Alabaster Paper' : 'Obsidian Noir'}`}
           aria-label="Toggle visual theme"
         >
-          {themeKey === 'obsidian' ? <Sun size={14} /> : <Moon size={14} />}
+          {themeKey === 'obsidian' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
         <button
@@ -133,7 +133,7 @@ export function ControlsDock({
           title="Reset to default resting state [R]"
           aria-label="Reset experience"
         >
-          <RotateCcw size={13} />
+          <RotateCcw size={15} />
           <span>RESET</span>
           <kbd className="key-hint">R</kbd>
         </button>

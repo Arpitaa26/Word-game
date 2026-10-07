@@ -70,10 +70,10 @@ export const COLOR_THEMES = {
   alabaster: {
     name: 'Alabaster Paper',
     bg: [0.965, 0.961, 0.945], // #F6F5F1
-    text: [0.078, 0.078, 0.086], // #141416
-    accent: [0.42, 0.41, 0.39],
+    text: [0.04, 0.04, 0.045], // #0A0A0C
+    accent: [0.22, 0.22, 0.22],
     hexBg: '#F6F5F1',
-    hexText: '#141416',
+    hexText: '#0A0A0C',
   },
 };
 

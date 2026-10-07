@@ -175,7 +175,6 @@ export const FRAGMENT_SHADER_SOURCE = `
     float relief = clamp(dot(normal2d, light_dir) * 2.5, 0.0, 1.0) * strain * u_sheen;
 
     // Composite Colors
-    // Background base
     vec3 base_color = u_color_bg;
 
     // Text color with subtle strain chromatic dispersion
@@ -185,13 +184,11 @@ export const FRAGMENT_SHADER_SOURCE = `
       mix(u_color_bg.b, u_color_text.b, alpha_b)
     );
 
-    // Add tactile relief sheen (soft highlight along stretched edges)
-    text_rgb += u_color_accent * relief;
+    // Subtle tactile relief sheen along stretched edges
+    float is_light = step(0.5, (u_color_bg.r + u_color_bg.g + u_color_bg.b) / 3.0);
+    vec3 sheen_color = mix(u_color_accent, -u_color_accent * 0.4, is_light);
+    text_rgb += sheen_color * relief;
 
-    // Final color blending
-    float max_alpha = max(max(alpha_r, alpha_g), alpha_b);
-    vec3 final_color = mix(base_color, text_rgb, max_alpha);
-
-    gl_FragColor = vec4(final_color, 1.0);
+    gl_FragColor = vec4(clamp(text_rgb, 0.0, 1.0), 1.0);
   }
 `;

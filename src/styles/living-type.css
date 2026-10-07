@@ -25,16 +25,16 @@
 
 [data-theme='alabaster'] {
   --bg-primary: #F6F5F1;
-  --text-primary: #141416;
-  --text-secondary: rgba(20, 20, 22, 0.60);
-  --text-muted: rgba(20, 20, 22, 0.35);
-  --border-subtle: rgba(20, 20, 22, 0.1);
-  --border-focus: rgba(20, 20, 22, 0.4);
-  --surface-dock: rgba(246, 245, 241, 0.78);
-  --surface-pill: rgba(0, 0, 0, 0.04);
-  --surface-active: rgba(0, 0, 0, 0.1);
-  --accent-dot: #141416;
-  --shadow-dock: 0 16px 40px -10px rgba(0, 0, 0, 0.1), 0 0 1px 1px rgba(0, 0, 0, 0.08);
+  --text-primary: #0A0A0C;
+  --text-secondary: #242428;
+  --text-muted: #4B4B54;
+  --border-subtle: rgba(10, 10, 12, 0.16);
+  --border-focus: rgba(10, 10, 12, 0.55);
+  --surface-dock: rgba(255, 255, 255, 0.95);
+  --surface-pill: rgba(10, 10, 12, 0.06);
+  --surface-active: #0A0A0C;
+  --accent-dot: #0A0A0C;
+  --shadow-dock: 0 20px 48px -10px rgba(0, 0, 0, 0.14), 0 0 1px 1px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -219,20 +219,20 @@ html, body {
 }
 
 /* ===================================================================
-   Controls Dock (Floating Floating Bar)
+   Controls Dock (Floating Bar)
    =================================================================== */
 .controls-dock {
   position: absolute;
-  bottom: 24px;
+  bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
+  gap: 16px;
+  padding: 12px 20px;
   background: var(--surface-dock);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-subtle);
   border-radius: 100px;
   box-shadow: var(--shadow-dock);
@@ -244,28 +244,29 @@ html, body {
 .dock-section {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .dock-separator {
   width: 1px;
-  height: 20px;
+  height: 26px;
   background-color: var(--border-subtle);
 }
 
 .dock-label {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.06em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
-  padding-left: 4px;
+  padding-left: 2px;
 }
 
 .dock-icon {
-  opacity: 0.7;
+  opacity: 0.8;
 }
 
 /* Custom Text Input */
@@ -273,7 +274,7 @@ html, body {
   background: var(--surface-pill);
   border: 1px solid var(--border-subtle);
   border-radius: 100px;
-  padding: 3px 8px 3px 12px;
+  padding: 5px 10px 5px 14px;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
@@ -284,10 +285,11 @@ html, body {
 
 .input-prefix {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--text-muted);
-  letter-spacing: 0.05em;
-  margin-right: 4px;
+  letter-spacing: 0.06em;
+  margin-right: 6px;
 }
 
 .editorial-input {
@@ -296,10 +298,10 @@ html, body {
   outline: none;
   color: var(--text-primary);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  width: 96px;
+  width: 105px;
   text-transform: uppercase;
 }
 
@@ -311,7 +313,7 @@ html, body {
 .preset-chips {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   margin-left: 4px;
 }
 
@@ -320,8 +322,9 @@ html, body {
   border: 1px solid transparent;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
-  padding: 3px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
   border-radius: 100px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -345,7 +348,7 @@ html, body {
   background: var(--surface-pill);
   border: 1px solid var(--border-subtle);
   border-radius: 100px;
-  padding: 2px;
+  padding: 3px;
 }
 
 .seg-btn {
@@ -354,9 +357,9 @@ html, body {
   outline: none;
   color: var(--text-secondary);
   font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 500;
-  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
   border-radius: 100px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -378,14 +381,15 @@ html, body {
 .dock-action-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   background: var(--surface-pill);
   border: 1px solid var(--border-subtle);
   border-radius: 100px;
-  padding: 6px 12px;
+  padding: 7px 15px;
   color: var(--text-secondary);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
@@ -409,9 +413,44 @@ html, body {
   background: var(--surface-pill);
   border: 1px solid var(--border-subtle);
   border-radius: 3px;
-  padding: 1px 4px;
-  font-size: 9px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-muted);
+}
+
+/* ===================================================================
+   Light Theme Explicit Overrides for Maximum Readability
+   =================================================================== */
+[data-theme='alabaster'] .seg-btn.active,
+[data-theme='alabaster'] .chip-btn.active {
+  background: #0A0A0C !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme='alabaster'] .seg-btn:hover,
+[data-theme='alabaster'] .chip-btn:hover {
+  color: #0A0A0C !important;
+}
+
+[data-theme='alabaster'] .text-input-group:focus-within {
+  background: rgba(10, 10, 12, 0.08) !important;
+  border-color: #0A0A0C !important;
+}
+
+[data-theme='alabaster'] .editorial-input {
+  color: #0A0A0C !important;
+}
+
+[data-theme='alabaster'] .dock-action-btn:hover {
+  background: #0A0A0C !important;
+  color: #FFFFFF !important;
+  border-color: #0A0A0C !important;
+}
+
+[data-theme='alabaster'] .dock-action-btn:hover .key-hint {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #FFFFFF !important;
 }
 
 /* ===================================================================
@@ -419,14 +458,14 @@ html, body {
    =================================================================== */
 .interaction-guide {
   position: absolute;
-  bottom: 74px;
+  bottom: 92px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 12px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.1em;
   color: var(--text-muted);
   pointer-events: none;
