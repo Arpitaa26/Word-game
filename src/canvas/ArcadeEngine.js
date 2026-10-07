@@ -562,16 +562,53 @@ export class ArcadeEngine {
     const dragVelY = (engine?.dragVelocity?.y || 0) * this.height;
 
     const simDt = dt * this.gameSpeed;
-    const gravity = (this.mode === 'pinball' ? 180 : 75) * (0.85 + this.gameSpeed * 0.15);
-    const damping = Math.pow(0.993, this.gameSpeed);
+    const gravity = (this.mode === 'pinball' ? 140 : 80) * (0.85 + this.gameSpeed * 0.15);
 
     this.orbs = this.orbs.filter((orb) => {
       orb.life -= dt;
-      if (orb.life <= 0) return false;
+      return orb.life > 0;
+    });
 
+    const orbCount = this.orbs.length;
+    for (let i = 0; i < orbCount; i++) {
+      const orbA = this.orbs[i];
+      for (let j = i + 1; j < orbCount; j++) {
+        const orbB = this.orbs[j];
+        const dx = orbB.x - orbA.x;
+        const dy = orbB.y - orbA.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = orbA.radius + orbB.radius;
+        if (dist < minDist && dist > 0.001) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const overlap = (minDist - dist) + 1.0;
+
+          orbA.x -= nx * overlap * 0.5;
+          orbA.y -= ny * overlap * 0.5;
+          orbB.x += nx * overlap * 0.5;
+          orbB.y += ny * overlap * 0.5;
+
+          const kx = orbA.vx - orbB.vx;
+          const ky = orbA.vy - orbB.vy;
+          const p = nx * kx + ny * ky;
+          if (p > 0) {
+            orbA.vx -= p * nx * 1.05;
+            orbA.vy -= p * ny * 1.05;
+            orbB.vx += p * nx * 1.05;
+            orbB.vy += p * ny * 1.05;
+          }
+        }
+      }
+    }
+
+    this.orbs.forEach((orb) => {
       orb.vy += gravity * simDt;
-      orb.vx *= damping;
-      orb.vy *= damping;
+
+      const currentSpeed = Math.hypot(orb.vx, orb.vy);
+      if (currentSpeed > 500) {
+        orb.vx *= 0.99;
+        orb.vy *= 0.99;
+      }
 
       orb.x += orb.vx * simDt;
       orb.y += orb.vy * simDt;
@@ -582,18 +619,21 @@ export class ArcadeEngine {
       const pad = orb.radius + 6;
       if (orb.x < pad) {
         orb.x = pad;
-        orb.vx = Math.abs(orb.vx) * 0.86;
+        orb.vx = Math.max(Math.abs(orb.vx) * 0.92, 140);
       } else if (orb.x > this.width - pad) {
         orb.x = this.width - pad;
-        orb.vx = -Math.abs(orb.vx) * 0.86;
+        orb.vx = -Math.max(Math.abs(orb.vx) * 0.92, 140);
       }
 
       if (orb.y < pad + 60) {
         orb.y = pad + 60;
-        orb.vy = Math.abs(orb.vy) * 0.86;
+        orb.vy = Math.max(Math.abs(orb.vy) * 0.92, 110);
       } else if (orb.y > this.height - pad - 60) {
         orb.y = this.height - pad - 60;
-        orb.vy = -Math.abs(orb.vy) * 0.86;
+        orb.vy = -Math.max(Math.abs(orb.vy) * 0.95, 230);
+        if (Math.abs(orb.vx) < 50) {
+          orb.vx = (Math.random() - 0.5) * 180;
+        }
       }
 
       const normX = orb.x / this.width;
@@ -603,21 +643,44 @@ export class ArcadeEngine {
       const col = this.collisionMap.testCircle(normX, normY, normRadius, dragOffsetX, dragOffsetY);
 
       if (col.hit && col.normal) {
+        orb.x += col.normal.x * (col.depth * this.width + 1.5);
+        orb.y += col.normal.y * (col.depth * this.height + 1.5);
+
         const vdotn = orb.vx * col.normal.x + orb.vy * col.normal.y;
         if (vdotn < 0) {
-          orb.vx -= 1.8 * vdotn * col.normal.x;
-          orb.vy -= 1.8 * vdotn * col.normal.y;
+          orb.vx -= 1.85 * vdotn * col.normal.x;
+          orb.vy -= 1.85 * vdotn * col.normal.y;
 
           if (engine?.isRecoiling || engine?.isDragging) {
-            orb.vx += dragVelX * 1.2;
-            orb.vy += dragVelY * 1.2;
+            orb.vx += dragVelX * 1.4;
+            orb.vy += dragVelY * 1.4;
           }
 
-          orb.x += col.normal.x * col.depth * this.width;
-          orb.y += col.normal.y * col.depth * this.height;
-
-          this.addParticles(orb.x, orb.y, 4, orb.color);
+          soundEngine.playOrbBounce(orb.x);
+          this.addParticles(orb.x, orb.y, 5, orb.color);
+        } else {
+          orb.vx += col.normal.x * 130 + (Math.random() - 0.5) * 80;
+          orb.vy += col.normal.y * 130 - 80;
         }
+      }
+
+      const postSpeed = Math.hypot(orb.vx, orb.vy);
+      const minCruisingSpeed = (this.mode === 'pinball' ? 200 : 160) * (0.9 + this.gameSpeed * 0.15);
+      const maxSpeed = 750 * this.gameSpeed;
+
+      if (postSpeed < minCruisingSpeed) {
+        if (postSpeed > 0.1) {
+          const boost = minCruisingSpeed / postSpeed;
+          orb.vx *= boost;
+          orb.vy *= boost;
+        } else {
+          orb.vx = (Math.random() - 0.5) * 180;
+          orb.vy = -200;
+        }
+      } else if (postSpeed > maxSpeed) {
+        const clamp = maxSpeed / postSpeed;
+        orb.vx *= clamp;
+        orb.vy *= clamp;
       }
 
       this.targets.forEach((tgt) => {
@@ -630,14 +693,15 @@ export class ArcadeEngine {
           const nx = dx / (dist || 1);
           const ny = dy / (dist || 1);
           const dot = orb.vx * nx + orb.vy * ny;
-          orb.vx -= 1.4 * dot * nx;
-          orb.vy -= 1.4 * dot * ny;
+          orb.vx -= 1.6 * dot * nx;
+          orb.vy -= 1.6 * dot * ny;
+
+          orb.vx -= nx * 90;
+          orb.vy -= ny * 90;
 
           this.triggerTargetHit(tgt, tgt.x, tgt.y, false);
         }
       });
-
-      return true;
     });
 
     this.particles = this.particles.filter((p) => {
