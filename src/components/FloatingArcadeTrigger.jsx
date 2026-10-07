@@ -32,11 +32,14 @@ export function FloatingArcadeTrigger({ onClick, highScore, themeKey }) {
           <div className="trigger-text-group">
             <div className="trigger-title-row">
               <span className="trigger-main-title">PLAY ARCADE</span>
-              <span className="trigger-curiosity-pill">CAN YOU HIT 500?</span>
+              <span className="trigger-curiosity-pill">
+                <span className="curiosity-pill-full">CAN YOU HIT 500?</span>
+                <span className="curiosity-pill-short">500 PTS?</span>
+              </span>
             </div>
             <div className="trigger-subtitle-row">
               <Sparkles size={11} className="trigger-mini-icon" />
-              <span className="trigger-subtext">Dino-style letter bounce & confetti</span>
+              <span className="trigger-subtext">Dino-style kinetic letter bounce</span>
               {highScore > 0 && (
                 <span className="trigger-high-score">
                   <Trophy size={10} /> {highScore.toLocaleString()}

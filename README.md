@@ -39,7 +39,7 @@ flowchart TD
         E4 --> E5[Projectile Orbs & Floating Targets]
         E5 --> E3
         E3 --> E6[Dynamic Speed Escalation & Milestones]
-        E6 --> E7[Arcade HUD & Confetti Render]
+        E6 --> E7[Arcade HUD & Celebration Render]
     end
 
     subgraph Audio Engine

@@ -22,9 +22,9 @@ export function ArcadeHUD({
   themeKey,
 }) {
   const modes = [
-    { id: 'blitz', label: 'TARGET BLITZ', icon: Target },
-    { id: 'pinball', label: 'JELLY PINBALL', icon: Zap },
-    { id: 'spell', label: 'WORD SPELL', icon: Type },
+    { id: 'blitz', label: 'TARGET BLITZ', shortLabel: 'BLITZ', icon: Target },
+    { id: 'pinball', label: 'JELLY PINBALL', shortLabel: 'PINBALL', icon: Zap },
+    { id: 'spell', label: 'WORD SPELL', shortLabel: 'SPELL', icon: Type },
   ];
 
   const nextMilestone = MILESTONES.find((m) => m > score) || 10000;
@@ -53,7 +53,8 @@ export function ArcadeHUD({
                 title={`Switch to ${m.label}`}
               >
                 <IconComponent size={13} className="tab-icon" />
-                <span>{m.label}</span>
+                <span className="tab-label-full">{m.label}</span>
+                <span className="tab-label-short">{m.shortLabel}</span>
               </button>
             );
           })}
@@ -100,7 +101,10 @@ export function ArcadeHUD({
             title={`Speed: ${gameSpeed.toFixed(1)}x`}
           >
             <Zap size={11} className="speed-icon" />
-            <span className="speed-val">{gameSpeed.toFixed(1)}x SPEED</span>
+            <span className="speed-val">
+              <span className="speed-val-full">{gameSpeed.toFixed(1)}x SPEED</span>
+              <span className="speed-val-short">{gameSpeed.toFixed(1)}x</span>
+            </span>
           </div>
 
           <div className={`combo-pill ${combo > 1 ? 'active' : ''}`}>
@@ -142,7 +146,7 @@ export function ArcadeHUD({
       <div className="milestone-progress-bar-container">
         <div className="milestone-label-row">
           <span className="milestone-target-text">
-            NEXT GOAL: <strong>{nextMilestone.toLocaleString()} PTS</strong> (CONFETTI)
+            NEXT GOAL: <strong>{nextMilestone.toLocaleString()} PTS</strong>
           </span>
           <span className="milestone-pts-ratio">
             {score.toLocaleString()} / {nextMilestone.toLocaleString()}
@@ -173,15 +177,18 @@ export function ArcadeHUD({
 
       <div className="arcade-bottom-bar">
         <div className="arcade-hints">
-          <span className="hint-item">
-            <kbd className="arcade-kbd">DRAG</kbd> AIM SLINGSHOT
+          <span className="hint-item hint-touch">
+            <kbd className="arcade-kbd">DRAG / TAP</kbd> LAUNCH & BLAST
           </span>
-          <span className="hint-dot">·</span>
-          <span className="hint-item">
-            <kbd className="arcade-kbd">TAP</kbd> SHOCKWAVE BLAST
+          <span className="hint-item hint-desktop">
+            <kbd className="arcade-kbd">DRAG</kbd> SLINGSHOT
           </span>
-          <span className="hint-dot">·</span>
-          <span className="hint-item">
+          <span className="hint-dot hint-desktop">·</span>
+          <span className="hint-item hint-desktop">
+            <kbd className="arcade-kbd">TAP</kbd> BLAST
+          </span>
+          <span className="hint-dot hint-desktop">·</span>
+          <span className="hint-item hint-desktop">
             <kbd className="arcade-kbd">SPACE</kbd> DROP ORB
           </span>
         </div>

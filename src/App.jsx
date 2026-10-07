@@ -70,7 +70,7 @@ export default function App() {
   }, [handleReset, isArcadeMode]);
 
   return (
-    <main className="app-container" data-theme={themeKey}>
+    <main className={`app-container ${isArcadeMode ? 'arcade-active' : ''}`} data-theme={themeKey}>
       <LivingCanvas
         ref={canvasRef}
         text={text}

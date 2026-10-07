@@ -563,115 +563,44 @@ html, body {
   border: 0;
 }
 
-@media (max-width: 900px) {
-  .editorial-header {
-    flex-wrap: wrap;
-    padding: 14px 18px;
-    gap: 8px;
-  }
+.seg-label-short {
+  display: none;
+}
 
-  .header-center {
-    position: static;
-    transform: none;
-    order: 3;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-top: 6px;
-  }
+.seg-label-full {
+  display: inline;
+}
 
-  .header-typing-bar {
-    width: 100%;
-    max-width: 340px;
-    justify-content: center;
-  }
+.tab-label-short {
+  display: none;
+}
 
-  .header-typing-input {
-    width: 100%;
-  }
+.tab-label-full {
+  display: inline;
+}
 
-  .project-subtitle {
-    display: none;
-  }
+.speed-val-short {
+  display: none;
+}
 
-  .telemetry-item:nth-child(3),
-  .telemetry-divider:nth-child(4) {
-    display: none;
-  }
+.speed-val-full {
+  display: inline;
+}
 
-  .controls-dock {
-    flex-wrap: wrap;
-    justify-content: center;
-    border-radius: 20px;
-    padding: 10px 14px;
-    bottom: 16px;
-    gap: 8px;
-  }
+.curiosity-pill-short {
+  display: none;
+}
 
-  .dock-separator {
-    display: none;
-  }
+.curiosity-pill-full {
+  display: inline;
+}
 
-  .preset-chips {
-    display: none;
-  }
+.hint-touch {
+  display: none;
+}
 
-  .interaction-guide {
-    display: none;
-  }
-
-  .arcade-top-bar {
-    top: 64px;
-    left: 14px;
-    right: 14px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .arcade-modes-dock {
-    order: 2;
-    width: 100%;
-    justify-content: center;
-  }
-
-  .arcade-center-stats {
-    order: 1;
-  }
-
-  .arcade-right-stats {
-    order: 1;
-  }
-
-  .arcade-bottom-bar {
-    bottom: 90px;
-    width: 92%;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .floating-arcade-trigger-container {
-    top: auto;
-    bottom: 84px;
-    right: 14px;
-  }
-
-  .milestone-progress-bar-container {
-    top: 148px;
-    width: 94%;
-  }
-
-  .celebration-toast-banner {
-    top: 196px;
-    width: 94%;
-  }
-
-  .celebration-toast-content {
-    padding: 8px 14px;
-  }
-
-  .celebration-main-title {
-    font-size: 11px;
-  }
+.hint-desktop {
+  display: inline-flex;
 }
 
 .floating-arcade-trigger-container {
@@ -1598,5 +1527,503 @@ html, body {
 .modal-btn.secondary:hover {
   color: var(--text-primary);
   background: var(--surface-pill);
+}
+
+@media (max-width: 1024px) {
+  .editorial-header {
+    padding: 16px 24px;
+  }
+
+  .header-center {
+    top: 20px;
+  }
+
+  .controls-dock {
+    max-width: 96vw;
+    padding: 10px 16px;
+    gap: 12px;
+  }
+
+  .preset-chips {
+    gap: 2px;
+  }
+
+  .chip-btn {
+    padding: 5px 9px;
+    font-size: 10.5px;
+  }
+
+  .seg-btn {
+    padding: 6px 11px;
+    font-size: 11.5px;
+  }
+
+  .floating-arcade-trigger-container {
+    top: 80px;
+    right: 24px;
+  }
+
+  .arcade-top-bar {
+    top: 68px;
+    left: 20px;
+    right: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container.arcade-active .controls-dock {
+    display: none !important;
+  }
+
+  .app-container.arcade-active .editorial-header {
+    display: none !important;
+  }
+
+  .editorial-header {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 8px;
+  }
+
+  .header-left {
+    gap: 10px;
+  }
+
+  .project-title {
+    font-size: 12px;
+  }
+
+  .project-tag {
+    display: none;
+  }
+
+  .telemetry-item:nth-child(1),
+  .telemetry-divider:nth-child(2),
+  .telemetry-item:nth-child(3),
+  .telemetry-divider:nth-child(4) {
+    display: none;
+  }
+
+  .telemetry-pill {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+
+  .header-center {
+    position: static;
+    transform: none;
+    order: 3;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  .header-typing-bar {
+    width: 100%;
+    max-width: 380px;
+    padding: 7px 14px;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .header-typing-input {
+    width: 100%;
+    font-size: 13px;
+  }
+
+  .interaction-guide {
+    display: none;
+  }
+
+  .controls-dock {
+    bottom: 12px;
+    width: calc(100% - 24px);
+    max-width: 460px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .dock-separator {
+    display: none;
+  }
+
+  .dock-label {
+    display: none;
+  }
+
+  .dock-section.presets-group {
+    display: none;
+  }
+
+  .seg-label-full {
+    display: none;
+  }
+
+  .seg-label-short {
+    display: inline;
+  }
+
+  .seg-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .dock-action-btn {
+    padding: 6px 11px;
+    font-size: 11px;
+  }
+
+  .key-hint {
+    display: none;
+  }
+
+  .floating-arcade-trigger-container {
+    top: 76px;
+    right: 14px;
+  }
+
+  .floating-arcade-card-btn {
+    padding: 7px 12px 7px 9px;
+  }
+
+  .trigger-icon-box {
+    width: 30px;
+    height: 30px;
+  }
+
+  .trigger-gamepad-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .trigger-main-title {
+    font-size: 11px;
+  }
+
+  .curiosity-pill-full {
+    display: none;
+  }
+
+  .curiosity-pill-short {
+    display: inline;
+  }
+
+  .trigger-curiosity-pill {
+    font-size: 8px;
+    padding: 1px 5px;
+  }
+
+  .trigger-subtitle-row {
+    display: none;
+  }
+
+  .arcade-top-bar {
+    top: 14px;
+    left: 12px;
+    right: 12px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .arcade-center-stats {
+    order: 1;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .arcade-right-stats {
+    order: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 6px;
+  }
+
+  .arcade-modes-dock {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .arcade-mode-tab {
+    padding: 5px 10px;
+    font-size: 10px;
+    gap: 4px;
+  }
+
+  .tab-label-full {
+    display: none;
+  }
+
+  .tab-label-short {
+    display: inline;
+  }
+
+  .speed-val-full {
+    display: none;
+  }
+
+  .speed-val-short {
+    display: inline;
+  }
+
+  .arcade-speed-pill {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .combo-pill {
+    padding: 4px 8px;
+    font-size: 10px;
+    min-width: 48px;
+  }
+
+  .dino-score-box {
+    padding: 3px 10px;
+    border-radius: 8px;
+  }
+
+  .dino-score-digits {
+    font-size: 15px;
+  }
+
+  .arcade-close-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .milestone-progress-bar-container {
+    top: 108px;
+    width: calc(100% - 24px);
+    max-width: 380px;
+    padding: 6px 12px;
+  }
+
+  .celebration-toast-banner {
+    top: 152px;
+    width: calc(100% - 24px);
+    max-width: 320px;
+  }
+
+  .celebration-toast-content {
+    padding: 8px 14px;
+    gap: 8px;
+  }
+
+  .celebration-main-title {
+    font-size: 11px;
+  }
+
+  .arcade-bottom-bar {
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
+    max-width: 380px;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .arcade-actions-group {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+
+  .arcade-action-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 14px;
+    font-size: 12px;
+    min-height: 42px;
+  }
+
+  .arcade-hints {
+    width: 100%;
+    justify-content: center;
+    font-size: 9px;
+    padding: 5px 10px;
+  }
+
+  .hint-touch {
+    display: inline-flex;
+  }
+
+  .hint-desktop {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .editorial-header {
+    padding: 10px 12px;
+  }
+
+  .typing-bar-label {
+    display: none;
+  }
+
+  .header-typing-bar {
+    padding: 6px 12px;
+    max-width: 100%;
+  }
+
+  .header-typing-input {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+  }
+
+  .controls-dock {
+    bottom: 10px;
+    width: calc(100% - 16px);
+    padding: 6px 8px;
+    border-radius: 16px;
+    gap: 6px;
+  }
+
+  .seg-btn {
+    padding: 5px 8px;
+    font-size: 10.5px;
+  }
+
+  .dock-action-btn {
+    padding: 5px 9px;
+    font-size: 10.5px;
+  }
+
+  .arcade-top-bar {
+    top: 10px;
+    left: 8px;
+    right: 8px;
+  }
+
+  .milestone-progress-bar-container {
+    top: 102px;
+    width: calc(100% - 16px);
+  }
+
+  .celebration-toast-banner {
+    top: 144px;
+    width: calc(100% - 16px);
+  }
+
+  .arcade-bottom-bar {
+    bottom: 12px;
+    width: calc(100% - 16px);
+  }
+
+  .arcade-hints {
+    display: none;
+  }
+
+  .arcade-modal-card {
+    width: 92%;
+    padding: 22px 16px;
+    border-radius: 20px;
+  }
+
+  .modal-title {
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+
+  .modal-scores-row {
+    padding: 12px 0;
+    margin-bottom: 14px;
+  }
+
+  .col-val {
+    font-size: 18px;
+  }
+
+  .modal-btn {
+    padding: 10px 14px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .telemetry-pill {
+    display: none;
+  }
+
+  .floating-arcade-card-btn {
+    padding: 6px 9px;
+  }
+
+  .trigger-curiosity-pill {
+    display: none;
+  }
+
+  .seg-btn {
+    padding: 4px 6px;
+    font-size: 9.5px;
+  }
+
+  .dock-action-btn {
+    padding: 4px 7px;
+    font-size: 9.5px;
+  }
+
+  .arcade-mode-tab span {
+    display: none;
+  }
+
+  .arcade-mode-tab {
+    padding: 6px 10px;
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .editorial-header {
+    padding: 6px 14px;
+  }
+
+  .header-center {
+    display: none;
+  }
+
+  .controls-dock {
+    bottom: 6px;
+    padding: 4px 10px;
+  }
+
+  .floating-arcade-trigger-container {
+    top: 10px;
+    right: 12px;
+  }
+
+  .arcade-top-bar {
+    top: 6px;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .arcade-bottom-bar {
+    bottom: 6px;
+  }
+
+  .milestone-progress-bar-container {
+    top: 48px;
+  }
+
+  .celebration-toast-banner {
+    top: 76px;
+  }
+
+  .arcade-modal-card {
+    max-height: 94vh;
+    overflow-y: auto;
+    padding: 14px 18px;
+  }
 }
 

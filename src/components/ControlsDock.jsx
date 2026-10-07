@@ -4,6 +4,13 @@ import { MATERIAL_PRESETS } from '../canvas/LivingTypeEngine';
 
 const PRESET_WORDS = ['CREATE', 'ELASTIC', 'KINETIC', 'DODO', 'FORM'];
 
+const SHORT_MATERIAL_NAMES = {
+  chrome: 'Chrome',
+  silicone: 'Silicone',
+  jelly: 'Jelly',
+  foam: 'Foam',
+};
+
 export function ControlsDock({
   text,
   setText,
@@ -63,7 +70,8 @@ export function ControlsDock({
               onClick={() => setMaterialKey(key)}
               title={data.description}
             >
-              {data.name}
+              <span className="seg-label-full">{data.name}</span>
+              <span className="seg-label-short">{SHORT_MATERIAL_NAMES[key] || data.name}</span>
             </button>
           ))}
         </div>

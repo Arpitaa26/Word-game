@@ -51,7 +51,7 @@ export class ArcadeEngine {
     this.targets = [];
     this.particles = [];
     this.popups = [];
-    this.confetti = [];
+    this.celebrationParticles = [];
     this.handledRipples = new Set();
 
     this.wasDragging = false;
@@ -113,7 +113,7 @@ export class ArcadeEngine {
     this.orbs = [];
     this.particles = [];
     this.popups = [];
-    this.confetti = [];
+    this.celebrationParticles = [];
     this.collectedLetters = [];
     this.milestonesReached.clear();
     this.handledRipples.clear();
@@ -162,10 +162,11 @@ export class ArcadeEngine {
       const count = chars.length;
       for (let i = 0; i < count; i++) {
         const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-        const rx = w * 0.38;
-        const ry = h * 0.32;
-        const cx = w * 0.5 + Math.cos(angle) * rx;
-        const cy = h * 0.5 + Math.sin(angle) * ry;
+      const baseSpan = Math.min(w, h);
+      const rx = Math.min(w * 0.38, baseSpan * 0.44);
+      const ry = Math.min(h * 0.28, baseSpan * 0.38);
+      const cx = w * 0.5 + Math.cos(angle) * rx;
+      const cy = h * 0.5 + Math.sin(angle) * ry;
 
         this.targets.push({
           id: i,
@@ -272,8 +273,8 @@ export class ArcadeEngine {
     }
   }
 
-  spawnConfetti(count = 140) {
-    const CONFETTI_COLORS = [
+  spawnCelebrationParticles(count = 140) {
+    const CELEBRATION_COLORS = [
       '#FFD700',
       '#FF3B30',
       '#00D2FF',
@@ -286,7 +287,7 @@ export class ArcadeEngine {
 
     const w = this.width;
     for (let i = 0; i < count; i++) {
-      this.confetti.push({
+      this.celebrationParticles.push({
         x: w * (0.05 + Math.random() * 0.9),
         y: -15 + Math.random() * 30,
         vx: (Math.random() - 0.5) * 320,
@@ -298,7 +299,7 @@ export class ArcadeEngine {
         rotSpeed: (Math.random() - 0.5) * 7,
         size: Math.random() * 7 + 5,
         aspect: Math.random() * 0.5 + 0.4,
-        color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+        color: CELEBRATION_COLORS[Math.floor(Math.random() * CELEBRATION_COLORS.length)],
         life: Math.random() * 1.5 + 3.2,
         maxLife: 4.5,
         opacity: 1.0,
@@ -329,7 +330,7 @@ export class ArcadeEngine {
 
   triggerMilestone(m) {
     soundEngine.playMilestone(m);
-    this.spawnConfetti(140);
+    this.spawnCelebrationParticles(140);
 
     const bannerTitle = m >= 1000
       ? `🏆 ${m.toLocaleString()} PTS! LIVING TYPE MASTER!`
@@ -368,7 +369,7 @@ export class ArcadeEngine {
         const totalChars = (this.options.text || 'CREATE').length;
         if (this.collectedLetters.length >= totalChars) {
           soundEngine.playWordComplete();
-          this.spawnConfetti(180);
+          this.spawnCelebrationParticles(180);
           const wordBonus = 2500 * nextCombo;
           this.addScore(wordBonus);
           this.addPopup(this.width * 0.5, this.height * 0.4, `WORD COMPLETE! +${wordBonus}`, '#FFD700', 1.6, 2.5);
@@ -541,9 +542,9 @@ export class ArcadeEngine {
     }
 
     this.targets.forEach((tgt) => {
-      tgt.angle += tgt.orbitSpeed * this.gameSpeed * dt;
-      const rx = this.width * (this.mode === 'spell' ? 0.36 : 0.34);
-      const ry = this.height * (this.mode === 'spell' ? 0.30 : 0.28);
+      const baseSpan = Math.min(this.width, this.height);
+      const rx = Math.min(this.width * (this.mode === 'spell' ? 0.36 : 0.34), baseSpan * 0.44);
+      const ry = Math.min(this.height * (this.mode === 'spell' ? 0.28 : 0.26), baseSpan * 0.38);
       tgt.x = this.width * 0.5 + Math.cos(tgt.angle) * rx;
       tgt.y = this.height * 0.5 + Math.sin(tgt.angle) * ry;
 
@@ -654,7 +655,7 @@ export class ArcadeEngine {
       return pop.alpha > 0;
     });
 
-    this.confetti = this.confetti.filter((c) => {
+    this.celebrationParticles = this.celebrationParticles.filter((c) => {
       c.life -= dt;
       if (c.life <= 0) return false;
 
@@ -812,7 +813,7 @@ export class ArcadeEngine {
       ctx.fill();
     });
 
-    this.confetti.forEach((c) => {
+    this.celebrationParticles.forEach((c) => {
       ctx.save();
       ctx.translate(c.x, c.y);
       ctx.rotate(c.rotation);
