@@ -175,10 +175,7 @@ export class ArcadeEngine {
           letterIndex: i,
           x: cx,
           y: cy,
-          vx: (Math.random() - 0.5) * 40,
-          vy: (Math.random() - 0.5) * 40,
           radius: 25,
-          mass: 1.2,
           angle,
           orbitSpeed: 0.10,
           color: isAlabaster ? '#0A0A0C' : '#FFFFFF',
@@ -202,10 +199,7 @@ export class ArcadeEngine {
           points: isStar ? 300 : (isGold ? 150 : 75),
           x: cx,
           y: cy,
-          vx: (Math.random() - 0.5) * 50,
-          vy: (Math.random() - 0.5) * 50,
           radius: isStar ? 24 : (isGold ? 22 : 20),
-          mass: isStar ? 1.4 : (isGold ? 1.2 : 1.0),
           angle,
           orbitSpeed: (0.07 + (i % 3) * 0.03) * (i % 2 === 0 ? 1 : -1),
           color: isAlabaster ? '#0A0A0C' : '#FFFFFF',
@@ -474,17 +468,11 @@ export class ArcadeEngine {
               });
 
               this.targets.forEach((tgt) => {
+                if (tgt.isHit) return;
                 const dx = tgt.x - rx;
                 const dy = tgt.y - ry;
-                const dist = Math.hypot(dx, dy) || 1;
-                const blastRadius = w * 0.46;
-                if (dist < blastRadius) {
-                  const force = (1.0 - dist / blastRadius) * 580;
-                  tgt.vx += (dx / dist) * force;
-                  tgt.vy += (dy / dist) * force;
-                }
-
-                if (!tgt.isHit && dist < tgt.radius + 55) {
+                const dist = Math.hypot(dx, dy);
+                if (dist < tgt.radius + 50) {
                   this.triggerTargetHit(tgt, tgt.x, tgt.y, true);
                 }
               });
@@ -514,16 +502,6 @@ export class ArcadeEngine {
             if (dist < this.width * 0.3) {
               orb.vx += aimVx * 0.6;
               orb.vy += aimVy * 0.6;
-            }
-          });
-
-          this.targets.forEach((tgt) => {
-            const dx = tgt.x - launchX;
-            const dy = tgt.y - launchY;
-            const dist = Math.hypot(dx, dy);
-            if (dist < this.width * 0.35) {
-              tgt.vx += aimVx * 0.45;
-              tgt.vy += aimVy * 0.45;
             }
           });
         }
@@ -564,73 +542,11 @@ export class ArcadeEngine {
     }
 
     this.targets.forEach((tgt) => {
-      tgt.angle += tgt.orbitSpeed * this.gameSpeed * dt;
       const baseSpan = Math.min(this.width, this.height);
       const rx = Math.min(this.width * (this.mode === 'spell' ? 0.36 : 0.34), baseSpan * 0.44);
       const ry = Math.min(this.height * (this.mode === 'spell' ? 0.28 : 0.26), baseSpan * 0.38);
-      const anchorX = this.width * 0.5 + Math.cos(tgt.angle) * rx;
-      const anchorY = this.height * 0.5 + Math.sin(tgt.angle) * ry;
-
-      const springK = 2.4;
-      const dampingK = 0.965;
-      tgt.vx += (anchorX - tgt.x) * springK * dt;
-      tgt.vy += (anchorY - tgt.y) * springK * dt;
-
-      if (engine?.isRecoiling || engine?.isDragging) {
-        tgt.vx += dragVelX * 0.4;
-        tgt.vy += dragVelY * 0.4;
-      }
-
-      if (engine?.isPointerInside && engine?.pointer) {
-        const px = engine.pointer.x * this.width;
-        const py = engine.pointer.y * this.height;
-        const pDist = Math.hypot(tgt.x - px, tgt.y - py);
-        const touchRadius = tgt.radius + 32;
-        if (pDist < touchRadius && pDist > 0.001) {
-          const pnx = (tgt.x - px) / pDist;
-          const pny = (tgt.y - py) / pDist;
-          const pushForce = (1.0 - pDist / touchRadius) * 400;
-          tgt.vx += pnx * pushForce;
-          tgt.vy += pny * pushForce;
-        }
-      }
-
-      tgt.vx *= dampingK;
-      tgt.vy *= dampingK;
-
-      tgt.x += tgt.vx * dt;
-      tgt.y += tgt.vy * dt;
-
-      const pad = tgt.radius + 8;
-      if (tgt.x < pad) {
-        tgt.x = pad;
-        tgt.vx = Math.abs(tgt.vx) * 0.88;
-      } else if (tgt.x > this.width - pad) {
-        tgt.x = this.width - pad;
-        tgt.vx = -Math.abs(tgt.vx) * 0.88;
-      }
-
-      if (tgt.y < pad + 60) {
-        tgt.y = pad + 60;
-        tgt.vy = Math.abs(tgt.vy) * 0.88;
-      } else if (tgt.y > this.height - pad - 60) {
-        tgt.y = this.height - pad - 60;
-        tgt.vy = -Math.abs(tgt.vy) * 0.88;
-      }
-
-      const normX = tgt.x / this.width;
-      const normY = tgt.y / this.height;
-      const normRadius = tgt.radius / this.width;
-      const col = this.collisionMap.testCircle(normX, normY, normRadius, dragOffsetX, dragOffsetY);
-      if (col.hit && col.normal) {
-        tgt.x += col.normal.x * (col.depth * this.width + 1.2);
-        tgt.y += col.normal.y * (col.depth * this.height + 1.2);
-        const vdotn = tgt.vx * col.normal.x + tgt.vy * col.normal.y;
-        if (vdotn < 0) {
-          tgt.vx -= 1.7 * vdotn * col.normal.x;
-          tgt.vy -= 1.7 * vdotn * col.normal.y;
-        }
-      }
+      tgt.x = this.width * 0.5 + Math.cos(tgt.angle) * rx;
+      tgt.y = this.height * 0.5 + Math.sin(tgt.angle) * ry;
 
       if (tgt.respawnTimer > 0) {
         tgt.respawnTimer -= dt;
@@ -639,38 +555,6 @@ export class ArcadeEngine {
         }
       }
     });
-
-    for (let i = 0; i < this.targets.length; i++) {
-      const tgtA = this.targets[i];
-      if (tgtA.isHit) continue;
-      for (let j = i + 1; j < this.targets.length; j++) {
-        const tgtB = this.targets[j];
-        if (tgtB.isHit) continue;
-        const dx = tgtB.x - tgtA.x;
-        const dy = tgtB.y - tgtA.y;
-        const dist = Math.hypot(dx, dy);
-        const minDist = tgtA.radius + tgtB.radius;
-        if (dist < minDist && dist > 0.001) {
-          const nx = dx / dist;
-          const ny = dy / dist;
-          const overlap = minDist - dist + 1.0;
-          tgtA.x -= nx * overlap * 0.5;
-          tgtA.y -= ny * overlap * 0.5;
-          tgtB.x += nx * overlap * 0.5;
-          tgtB.y += ny * overlap * 0.5;
-
-          const kx = tgtA.vx - tgtB.vx;
-          const ky = tgtA.vy - tgtB.vy;
-          const p = nx * kx + ny * ky;
-          if (p > 0) {
-            tgtA.vx -= p * nx * 0.95;
-            tgtA.vy -= p * ny * 0.95;
-            tgtB.vx += p * nx * 0.95;
-            tgtB.vy += p * ny * 0.95;
-          }
-        }
-      }
-    }
 
     const dragOffsetX = engine?.dragOffset?.x || 0;
     const dragOffsetY = engine?.dragOffset?.y || 0;
@@ -808,33 +692,14 @@ export class ArcadeEngine {
         if (dist < tgt.radius + orb.radius) {
           const nx = dx / (dist || 1);
           const ny = dy / (dist || 1);
+          const dot = orb.vx * nx + orb.vy * ny;
+          orb.vx -= 1.6 * dot * nx;
+          orb.vy -= 1.6 * dot * ny;
 
-          const orbMass = 1.0;
-          const tgtMass = tgt.mass || 1.2;
-          const totalMass = orbMass + tgtMass;
+          orb.vx -= nx * 90;
+          orb.vy -= ny * 90;
 
-          const relVx = orb.vx - tgt.vx;
-          const relVy = orb.vy - tgt.vy;
-          const normalVel = relVx * nx + relVy * ny;
-
-          if (normalVel > 0) {
-            const restitution = 1.45;
-            const impulse = (normalVel * (1 + restitution)) / totalMass;
-
-            orb.vx -= impulse * tgtMass * nx;
-            orb.vy -= impulse * tgtMass * ny;
-
-            tgt.vx += impulse * orbMass * nx + nx * 240;
-            tgt.vy += impulse * orbMass * ny + ny * 240;
-
-            const overlap = (tgt.radius + orb.radius) - dist + 2.0;
-            orb.x -= nx * overlap * 0.4;
-            orb.y -= ny * overlap * 0.4;
-            tgt.x += nx * overlap * 0.6;
-            tgt.y += ny * overlap * 0.6;
-
-            this.triggerTargetHit(tgt, tgt.x, tgt.y, false);
-          }
+          this.triggerTargetHit(tgt, tgt.x, tgt.y, false);
         }
       });
     });
