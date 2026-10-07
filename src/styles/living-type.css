@@ -219,57 +219,6 @@ html, body {
 }
 
 /* ===================================================================
-   Editorial Corners
-   =================================================================== */
-.editorial-corners {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.corner-mark {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  opacity: 0.65;
-}
-
-.corner-mark.top-left {
-  top: 80px;
-  left: 32px;
-}
-
-.corner-mark.top-right {
-  top: 80px;
-  right: 32px;
-}
-
-.corner-mark.bottom-left {
-  bottom: 84px;
-  left: 32px;
-}
-
-.corner-mark.bottom-right {
-  bottom: 84px;
-  right: 32px;
-}
-
-.crosshair {
-  font-size: 12px;
-  line-height: 1;
-  opacity: 0.8;
-}
-
-/* ===================================================================
    Controls Dock (Floating Floating Bar)
    =================================================================== */
 .controls-dock {

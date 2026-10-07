@@ -3,7 +3,6 @@ import { LivingCanvas } from './components/LivingCanvas';
 import { EditorialHeader } from './components/EditorialHeader';
 import { ControlsDock } from './components/ControlsDock';
 import { InteractionGuide } from './components/InteractionGuide';
-import { EditorialCorners } from './components/EditorialCorners';
 import './styles/living-type.css';
 
 export default function App() {
@@ -75,10 +74,7 @@ export default function App() {
         onStatsUpdate={handleStatsUpdate}
       />
 
-      {/* 2. Gallery Registration & Coordinate Corners */}
-      <EditorialCorners themeKey={themeKey} />
-
-      {/* 3. Top Editorial Header with Telemetry & Sound */}
+      {/* 2. Top Editorial Header with Telemetry & Sound */}
       <EditorialHeader stats={stats} themeKey={themeKey} />
 
       {/* 4. Subtle Interaction Cues / Guide */}
