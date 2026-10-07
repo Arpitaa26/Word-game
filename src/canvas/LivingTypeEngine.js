@@ -1,86 +1,85 @@
-/**
- * LIVING TYPE — Handcrafted Multi-Body Viscoelastic Typography Engine
- * 
- * Each glyph is an independent physical soft-body with:
- * - Center-of-mass spring anchor dynamics
- * - Non-linear hyperelastic pull & fling
- * - Sliced jelly-mass bending curvature
- * - Squash & stretch (volume conservation)
- * - Inter-glyph elastic coupling tension
- * - Acoustic shockwave impulse transmission
- * - Soft dynamic contact shadow
- */
-
+import { VERTEX_SHADER_SOURCE, FRAGMENT_SHADER_SOURCE } from './shaders';
 import { soundEngine } from './sound';
 
 export const MATERIAL_PRESETS = {
   silicone: {
-    name: 'Silicone Rubber',
-    description: 'Supple, bouncy elastomer with juicy squash & stretch',
-    stiffness: 120.0,
-    damping: 9.5,
-    sliceStiffness: 180.0,
-    sliceDamping: 11.0,
-    coupling: 0.18,
-    squashStrength: 0.75,
-    maxStretch: 2.2,
-    shockImpulse: 280.0,
+    name: 'Silicone',
+    description: 'Soft, supple viscoelastic bounce with balanced elasticity',
+    hoverStrength: 0.045,
+    hoverRadius: 0.35,
+    dragRadius: 0.42,
+    springStiffness: 140.0,
+    springDamping: 11.5,
+    rippleSpeed: 0.72,
+    rippleAmp: 0.048,
+    rippleFreq: 30.0,
+    rippleDecay: 2.3,
+    rippleWidth: 0.12,
+    idleSpeed: 1.0,
+    idleAmp: 1.0,
+    chromaticDispersion: 1.0,
+    sheen: 0.75,
   },
-  gel: {
-    name: 'Viscous Gel',
-    description: 'Heavy mass with slow, wave-like lingering recoil',
-    stiffness: 55.0,
-    damping: 6.0,
-    sliceStiffness: 90.0,
-    sliceDamping: 7.0,
-    coupling: 0.32,
-    squashStrength: 0.50,
-    maxStretch: 2.6,
-    shockImpulse: 190.0,
+  fluidInk: {
+    name: 'Fluid Gel',
+    description: 'Viscous, wave-like deformation with lingering ripples',
+    hoverStrength: 0.068,
+    hoverRadius: 0.45,
+    dragRadius: 0.50,
+    springStiffness: 65.0,
+    springDamping: 7.5,
+    rippleSpeed: 0.55,
+    rippleAmp: 0.075,
+    rippleFreq: 22.0,
+    rippleDecay: 1.4,
+    rippleWidth: 0.16,
+    idleSpeed: 1.3,
+    idleAmp: 1.5,
+    chromaticDispersion: 1.4,
+    sheen: 0.9,
   },
-  taut: {
-    name: 'Taut Spring',
-    description: 'High tensile resistance with snappy instant twang',
-    stiffness: 240.0,
-    damping: 16.0,
-    sliceStiffness: 320.0,
-    sliceDamping: 18.0,
-    coupling: 0.10,
-    squashStrength: 0.90,
-    maxStretch: 1.8,
-    shockImpulse: 360.0,
+  latexTension: {
+    name: 'Tension',
+    description: 'High tensile resistance with snappy, rapid elastic recoil',
+    hoverStrength: 0.032,
+    hoverRadius: 0.26,
+    dragRadius: 0.32,
+    springStiffness: 280.0,
+    springDamping: 18.0,
+    rippleSpeed: 0.95,
+    rippleAmp: 0.035,
+    rippleFreq: 40.0,
+    rippleDecay: 3.5,
+    rippleWidth: 0.09,
+    idleSpeed: 0.7,
+    idleAmp: 0.6,
+    chromaticDispersion: 0.6,
+    sheen: 0.5,
   },
 };
 
 export const COLOR_THEMES = {
   obsidian: {
     name: 'Obsidian Noir',
-    bg: '#0C0C0E',
-    text: '#F5F4F0',
-    textMuted: 'rgba(245, 244, 240, 0.4)',
-    accent: '#FFFFFF',
-    shadow: 'rgba(0, 0, 0, 0.65)',
-    tether: 'rgba(245, 244, 240, 0.25)',
-    wave: 'rgba(245, 244, 240, 0.35)',
+    bg: [0.043, 0.043, 0.051], // #0B0B0D
+    text: [0.965, 0.961, 0.949], // #F6F5F2
+    accent: [0.78, 0.76, 0.72],
+    hexBg: '#0B0B0D',
+    hexText: '#F6F5F2',
   },
   alabaster: {
     name: 'Alabaster Paper',
-    bg: '#F6F5F1',
-    text: '#141416',
-    textMuted: 'rgba(20, 20, 22, 0.4)',
-    accent: '#000000',
-    shadow: 'rgba(0, 0, 0, 0.12)',
-    tether: 'rgba(20, 20, 22, 0.20)',
-    wave: 'rgba(20, 20, 22, 0.30)',
+    bg: [0.965, 0.961, 0.945], // #F6F5F1
+    text: [0.078, 0.078, 0.086], // #141416
+    accent: [0.42, 0.41, 0.39],
+    hexBg: '#F6F5F1',
+    hexText: '#141416',
   },
 };
-
-const NUM_SLICES = 12;
 
 export class LivingTypeEngine {
   constructor(canvas, options = {}) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
     this.options = {
       text: 'CREATE',
       fontFamily: 'Syne',
@@ -90,48 +89,56 @@ export class LivingTypeEngine {
       ...options,
     };
 
-    // State
-    this.text = (this.options.text || 'CREATE').toUpperCase();
-    this.fontFamily = this.options.fontFamily || 'Syne';
-    this.materialKey = this.options.materialKey || 'silicone';
-    this.material = MATERIAL_PRESETS[this.materialKey] || MATERIAL_PRESETS.silicone;
-    this.themeKey = this.options.themeKey || 'obsidian';
-    this.theme = COLOR_THEMES[this.themeKey] || COLOR_THEMES.obsidian;
+    this.gl = null;
+    this.program = null;
+    this.uniforms = {};
+    this.offscreenCanvas = document.createElement('canvas');
+    this.offscreenCtx = this.offscreenCanvas.getContext('2d');
+    this.texture = null;
 
     // Simulation Timing
     this.startTime = performance.now();
     this.lastTime = performance.now();
     this.animFrameId = null;
 
-    // Glyphs array
-    this.glyphs = [];
-    this.fontSize = 120;
-    this.totalTextWidth = 0;
-
-    // Pointer Interaction State
-    this.pointer = { x: -1000, y: -1000 };
-    this.prevPointer = { x: -1000, y: -1000 };
-    this.pointerVelocity = { x: 0, y: 0 };
+    // Pointer State
+    this.pointer = { x: 0.5, y: 0.5 };
+    this.prevPointer = { x: 0.5, y: 0.5 };
+    this.smoothPointer = { x: 0.5, y: 0.5, vx: 0, vy: 0 };
+    this.pointerVel = { x: 0, y: 0 };
     this.isPointerInside = false;
+    this.pointerActive = 0.0;
 
-    // Active Grab State
-    this.grabbedGlyph = null;
-    this.grabOffset = { x: 0, y: 0 };
-    this.grabStartPos = { x: 0, y: 0 };
-    this.hasMovedGrab = false;
+    // Drag & Spring Recoil State
+    this.isDragging = false;
+    this.dragStart = { x: 0, y: 0 };
+    this.dragOffset = { x: 0, y: 0 };
+    this.dragVelocity = { x: 0, y: 0 };
+    this.isRecoiling = false;
+    this.dragMovedDistance = 0;
 
-    // Acoustic Shockwaves (Bounded ring buffer)
-    this.shockwaves = [];
-    this.maxShockwaves = 6;
+    // Ripples (Max 8 bounded for solid 60/120fps performance)
+    this.ripples = [];
+    this.maxRipples = 8;
 
-    // Performance telemetry
+    // Material & Theme
+    this.materialKey = this.options.materialKey;
+    this.material = MATERIAL_PRESETS[this.materialKey];
+    this.themeKey = this.options.themeKey;
+    this.theme = COLOR_THEMES[this.themeKey];
+
+    // Typographic State
+    this.text = this.options.text;
+    this.fontFamily = this.options.fontFamily;
+
+    // Performance & Telemetry
     this.frameCount = 0;
     this.fps = 60;
-    this.lastFpsTime = performance.now();
+    this.lastFpsUpdate = performance.now();
 
-    // Event listeners
-    this.handlePointerDown = this.onPointerDown.bind(this);
+    // Bound listeners for clean cleanup
     this.handlePointerMove = this.onPointerMove.bind(this);
+    this.handlePointerDown = this.onPointerDown.bind(this);
     this.handlePointerUp = this.onPointerUp.bind(this);
     this.handlePointerLeave = this.onPointerLeave.bind(this);
     this.handleResize = this.onResize.bind(this);
@@ -140,30 +147,222 @@ export class LivingTypeEngine {
   }
 
   init() {
+    this.initWebGL();
     this.bindEvents();
+    this.updateOffscreenText();
     this.onResize();
-    this.setupGlyphs();
     this.startLoop();
 
     if (typeof document !== 'undefined' && document.fonts) {
       document.fonts.ready.then(() => {
-        this.setupGlyphs();
+        this.updateOffscreenText();
       });
     }
   }
 
+  initWebGL() {
+    const gl = this.canvas.getContext('webgl', {
+      alpha: false,
+      antialias: true,
+      powerPreference: 'high-performance',
+      preserveDrawingBuffer: false,
+    });
+
+    if (!gl) {
+      console.warn('[LivingType] WebGL not supported, falling back to experimental-webgl');
+      this.gl = this.canvas.getContext('experimental-webgl');
+    } else {
+      this.gl = gl;
+    }
+
+    if (!this.gl) {
+      throw new Error('[LivingType] WebGL context initialization failed');
+    }
+
+    const { gl: ctx } = this;
+
+    // Compile Shaders
+    const vertShader = this.compileShader(ctx.VERTEX_SHADER, VERTEX_SHADER_SOURCE);
+    const fragShader = this.compileShader(ctx.FRAGMENT_SHADER, FRAGMENT_SHADER_SOURCE);
+
+    // Link Program
+    const prog = ctx.createProgram();
+    ctx.attachShader(prog, vertShader);
+    ctx.attachShader(prog, fragShader);
+    ctx.linkProgram(prog);
+
+    if (!ctx.getProgramParameter(prog, ctx.LINK_STATUS)) {
+      const err = ctx.getProgramInfoLog(prog);
+      ctx.deleteProgram(prog);
+      throw new Error(`[LivingType] Program link error: ${err}`);
+    }
+
+    this.program = prog;
+    ctx.useProgram(prog);
+
+    // Fullscreen Quad Buffer
+    const positionBuffer = ctx.createBuffer();
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, positionBuffer);
+    const quadVertices = new Float32Array([
+      -1, -1,
+       1, -1,
+      -1,  1,
+      -1,  1,
+       1, -1,
+       1,  1,
+    ]);
+    ctx.bufferData(ctx.ARRAY_BUFFER, quadVertices, ctx.STATIC_DRAW);
+
+    const aPos = ctx.getAttribLocation(prog, 'a_position');
+    ctx.enableVertexAttribArray(aPos);
+    ctx.vertexAttribPointer(aPos, 2, ctx.FLOAT, false, 0, 0);
+
+    // Cache Uniform Locations
+    this.cacheUniforms();
+
+    // Create Text Texture
+    this.texture = ctx.createTexture();
+    ctx.bindTexture(ctx.TEXTURE_2D, this.texture);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_T, ctx.CLAMP_TO_EDGE);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MIN_FILTER, ctx.LINEAR);
+    ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_MAG_FILTER, ctx.LINEAR);
+  }
+
+  compileShader(type, source) {
+    const { gl } = this;
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      const err = gl.getShaderInfoLog(shader);
+      gl.deleteShader(shader);
+      throw new Error(`[LivingType] Shader compilation error: ${err}`);
+    }
+    return shader;
+  }
+
+  cacheUniforms() {
+    const { gl, program } = this;
+    this.uniforms = {
+      u_texture: gl.getUniformLocation(program, 'u_texture'),
+      u_resolution: gl.getUniformLocation(program, 'u_resolution'),
+      u_time: gl.getUniformLocation(program, 'u_time'),
+      u_pointer: gl.getUniformLocation(program, 'u_pointer'),
+      u_pointer_vel: gl.getUniformLocation(program, 'u_pointer_vel'),
+      u_pointer_active: gl.getUniformLocation(program, 'u_pointer_active'),
+      u_hover_radius: gl.getUniformLocation(program, 'u_hover_radius'),
+      u_hover_strength: gl.getUniformLocation(program, 'u_hover_strength'),
+      u_drag_origin: gl.getUniformLocation(program, 'u_drag_origin'),
+      u_drag_offset: gl.getUniformLocation(program, 'u_drag_offset'),
+      u_drag_radius: gl.getUniformLocation(program, 'u_drag_radius'),
+      u_drag_active: gl.getUniformLocation(program, 'u_drag_active'),
+      u_ripple_count: gl.getUniformLocation(program, 'u_ripple_count'),
+      u_idle_speed: gl.getUniformLocation(program, 'u_idle_speed'),
+      u_idle_amp: gl.getUniformLocation(program, 'u_idle_amp'),
+      u_chromatic_dispersion: gl.getUniformLocation(program, 'u_chromatic_dispersion'),
+      u_sheen: gl.getUniformLocation(program, 'u_sheen'),
+      u_color_bg: gl.getUniformLocation(program, 'u_color_bg'),
+      u_color_text: gl.getUniformLocation(program, 'u_color_text'),
+      u_color_accent: gl.getUniformLocation(program, 'u_color_accent'),
+    };
+
+    // Cache ripple struct uniforms
+    this.rippleUniforms = [];
+    for (let i = 0; i < this.maxRipples; i++) {
+      this.rippleUniforms.push({
+        origin: gl.getUniformLocation(program, `u_ripples[${i}].origin`),
+        startTime: gl.getUniformLocation(program, `u_ripples[${i}].startTime`),
+        speed: gl.getUniformLocation(program, `u_ripples[${i}].speed`),
+        amplitude: gl.getUniformLocation(program, `u_ripples[${i}].amplitude`),
+        frequency: gl.getUniformLocation(program, `u_ripples[${i}].frequency`),
+        decay: gl.getUniformLocation(program, `u_ripples[${i}].decay`),
+        width: gl.getUniformLocation(program, `u_ripples[${i}].width`),
+        duration: gl.getUniformLocation(program, `u_ripples[${i}].duration`),
+      });
+    }
+  }
+
+  /**
+   * Render high-definition crisp editorial typography to offscreen canvas
+   * Automatically adapts font size, weight, and layout to fit screen gracefully.
+   */
+  updateOffscreenText() {
+    const width = this.canvas.width || window.innerWidth * 2;
+    const height = this.canvas.height || window.innerHeight * 2;
+
+    this.offscreenCanvas.width = width;
+    this.offscreenCanvas.height = height;
+
+    const ctx = this.offscreenCtx;
+    ctx.clearRect(0, 0, width, height);
+
+    const textToRender = (this.text || 'CREATE').trim();
+
+    // Determine font styling
+    let fontWeight = '700';
+    let fontStyle = 'normal';
+    let letterSpacing = '-0.04em';
+
+    if (this.fontFamily.toLowerCase().includes('serif')) {
+      fontWeight = '400';
+      fontStyle = 'italic';
+      letterSpacing = '-0.02em';
+    } else if (this.fontFamily.toLowerCase().includes('space')) {
+      fontWeight = '700';
+      letterSpacing = '0.02em';
+    }
+
+    if ('letterSpacing' in ctx) {
+      ctx.letterSpacing = letterSpacing;
+    }
+
+    // Adaptive Font Sizing
+    // Target typography to fill approx 60-75% of screen width while leaving generous negative space
+    const targetWidth = width * 0.72;
+    let fontSize = Math.min(width * 0.22, height * 0.35);
+
+    ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${this.fontFamily}", sans-serif`;
+    let measured = ctx.measureText(textToRender).width;
+
+    // Scale font size down if word exceeds generous negative margins
+    if (measured > targetWidth) {
+      fontSize = fontSize * (targetWidth / measured);
+      ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${this.fontFamily}", sans-serif`;
+    }
+
+    // High Quality Rasterization
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#FFFFFF'; // Pure white alpha mask
+
+    // Center coordinates
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    ctx.fillText(textToRender, centerX, centerY);
+
+    // Upload texture to WebGL
+    const { gl } = this;
+    if (gl && this.texture) {
+      gl.bindTexture(gl.TEXTURE_2D, this.texture);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.offscreenCanvas);
+    }
+  }
+
   setText(newText) {
-    const formatted = (newText || 'CREATE').toUpperCase();
-    if (this.text !== formatted) {
-      this.text = formatted;
-      this.setupGlyphs();
+    if (this.text !== newText) {
+      this.text = newText;
+      this.updateOffscreenText();
     }
   }
 
   setFontFamily(newFont) {
     if (this.fontFamily !== newFont) {
       this.fontFamily = newFont;
-      this.setupGlyphs();
+      this.updateOffscreenText();
     }
   }
 
@@ -181,334 +380,151 @@ export class LivingTypeEngine {
     }
   }
 
+  triggerRipple(x, y, customOpts = {}) {
+    const currentTime = (performance.now() - this.startTime) / 1000.0;
+    const mat = this.material;
+
+    const newRipple = {
+      x,
+      y,
+      startTime: currentTime,
+      speed: customOpts.speed || mat.rippleSpeed,
+      amplitude: customOpts.amplitude || mat.rippleAmp,
+      frequency: customOpts.frequency || mat.rippleFreq,
+      decay: customOpts.decay || mat.rippleDecay,
+      width: customOpts.width || mat.rippleWidth,
+      duration: 2.2,
+    };
+
+    // Keep bounded array
+    if (this.ripples.length >= this.maxRipples) {
+      this.ripples.shift();
+    }
+    this.ripples.push(newRipple);
+    soundEngine.playRipple();
+  }
+
   reset() {
     this.text = 'CREATE';
     this.materialKey = 'silicone';
     this.material = MATERIAL_PRESETS.silicone;
-    this.shockwaves = [];
-    this.grabbedGlyph = null;
-    this.setupGlyphs();
-  }
-
-  /**
-   * Pre-renders each glyph to its own high-definition offscreen canvas
-   * and initializes individual spring-body coordinates.
-   */
-  setupGlyphs() {
-    const width = this.canvas.width / (window.devicePixelRatio || 1);
-    const height = this.canvas.height / (window.devicePixelRatio || 1);
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-    // Dynamic Font Size Calculation
-    const targetWidth = width * 0.78;
-    let baseFontSize = Math.min(width * 0.22, height * 0.32);
-
-    // Probe text measurement
-    const probeCanvas = document.createElement('canvas');
-    const probeCtx = probeCanvas.getContext('2d');
-    let fontWeight = '700';
-    let fontStyle = 'normal';
-    if (this.fontFamily.toLowerCase().includes('serif')) {
-      fontWeight = '400';
-      fontStyle = 'italic';
-    }
-
-    probeCtx.font = `${fontStyle} ${fontWeight} ${baseFontSize}px "${this.fontFamily}", sans-serif`;
-    let measuredWidth = probeCtx.measureText(this.text).width;
-
-    if (measuredWidth > targetWidth) {
-      baseFontSize = baseFontSize * (targetWidth / measuredWidth);
-    }
-    this.fontSize = Math.max(baseFontSize, 36);
-
-    const fontString = `${fontStyle} ${fontWeight} ${this.fontSize}px "${this.fontFamily}", sans-serif`;
-    probeCtx.font = fontString;
-
-    // Calculate individual letter positions & bounds
-    const chars = this.text.split('');
-    const charMetrics = chars.map((char) => {
-      const metrics = probeCtx.measureText(char);
-      return {
-        char,
-        width: metrics.width,
-        actualBoundingBoxAscent: metrics.actualBoundingBoxAscent || this.fontSize * 0.7,
-        actualBoundingBoxDescent: metrics.actualBoundingBoxDescent || this.fontSize * 0.2,
-      };
-    });
-
-    const letterSpacing = this.fontSize * 0.04;
-    const totalW = charMetrics.reduce((sum, m) => sum + m.width, 0) + (chars.length - 1) * letterSpacing;
-    this.totalTextWidth = totalW;
-
-    let startX = (width - totalW) / 2;
-    const centerY = height / 2;
-
-    // Create or reconcile glyph objects
-    this.glyphs = charMetrics.map((metric, i) => {
-      const charWidth = metric.width;
-      const charHeight = this.fontSize * 1.35;
-      const anchorX = startX + charWidth / 2;
-      const anchorY = centerY;
-      startX += charWidth + letterSpacing;
-
-      // Rasterize glyph to offscreen buffer
-      const glyphBuffer = document.createElement('canvas');
-      glyphBuffer.width = Math.ceil(charWidth * 1.4 * dpr);
-      glyphBuffer.height = Math.ceil(charHeight * 1.4 * dpr);
-      const gctx = glyphBuffer.getContext('2d');
-      gctx.scale(dpr, dpr);
-
-      gctx.font = fontString;
-      gctx.textAlign = 'center';
-      gctx.textBaseline = 'middle';
-      gctx.fillStyle = '#FFFFFF';
-      gctx.fillText(metric.char, (charWidth * 1.4) / 2, (charHeight * 1.4) / 2);
-
-      // Slices for jelly bending curvature
-      const slices = [];
-      const sliceH = (charHeight * 1.4) / NUM_SLICES;
-      for (let s = 0; s < NUM_SLICES; s++) {
-        slices.push({
-          y: s * sliceH,
-          h: sliceH + 1, // 1px overlap to prevent raster seams
-          dx: 0,
-          dy: 0,
-          vdx: 0,
-          vdy: 0,
-        });
-      }
-
-      return {
-        char: metric.char,
-        index: i,
-        buffer: glyphBuffer,
-        bufferWidth: charWidth * 1.4,
-        bufferHeight: charHeight * 1.4,
-        width: charWidth,
-        height: charHeight,
-        anchorX,
-        anchorY,
-        x: anchorX,
-        y: anchorY,
-        vx: 0,
-        vy: 0,
-        rotation: 0,
-        vRotation: 0,
-        scaleX: 1,
-        scaleY: 1,
-        vScaleX: 0,
-        vScaleY: 0,
-        isGrabbed: false,
-        slices,
-        // Entry animation offset
-        entryDelay: i * 0.04,
-      };
-    });
-  }
-
-  triggerShockwave(x, y, customAmp = 1.0) {
-    const now = (performance.now() - this.startTime) / 1000.0;
-    const newWave = {
-      x,
-      y,
-      startTime: now,
-      speed: 850, // pixels per second
-      maxRadius: Math.max(this.canvas.width, this.canvas.height) * 0.75,
-      amplitude: customAmp,
-      duration: 1.4,
-      decay: 2.5,
-    };
-
-    if (this.shockwaves.length >= this.maxShockwaves) {
-      this.shockwaves.shift();
-    }
-    this.shockwaves.push(newWave);
-    soundEngine.playRipple();
-  }
-
-  triggerWave() {
-    if (this.glyphs.length === 0) return;
-    const firstGlyph = this.glyphs[0];
-    this.triggerShockwave(firstGlyph.x - 60, firstGlyph.y, 1.3);
-
-    this.glyphs.forEach((g, i) => {
-      setTimeout(() => {
-        g.vy -= 160;
-        g.vRotation += (Math.random() - 0.5) * 0.35;
-        for (let s = 0; s < g.slices.length; s++) {
-          g.slices[s].vdy += -30;
-        }
-      }, i * 70);
-    });
-  }
-
-  jiggle() {
-    this.glyphs.forEach((g) => {
-      g.vx += (Math.random() - 0.5) * 240;
-      g.vy += (Math.random() - 0.5) * 240;
-      g.vRotation += (Math.random() - 0.5) * 0.6;
-      for (let s = 0; s < g.slices.length; s++) {
-        g.slices[s].vdx += (Math.random() - 0.5) * 35;
-      }
-    });
-    soundEngine.playRelease(2.5);
-  }
-
-  onPointerDown(e) {
-    const { x, y } = this.getCanvasCoords(e);
-    this.pointer = { x, y };
-    this.isPointerInside = true;
-    this.hasMovedGrab = false;
-
-    // Check if clicked directly on or near a glyph
-    let closestGlyph = null;
-    let closestDist = Infinity;
-
-    for (const g of this.glyphs) {
-      const d = Math.hypot(x - g.x, y - g.y);
-      const hitRadius = Math.max(g.width, g.height) * 0.65;
-      if (d < hitRadius && d < closestDist) {
-        closestDist = d;
-        closestGlyph = g;
-      }
-    }
-
-    if (closestGlyph) {
-      this.grabbedGlyph = closestGlyph;
-      closestGlyph.isGrabbed = true;
-      this.grabStartPos = { x, y };
-      this.grabOffset = { x: closestGlyph.x - x, y: closestGlyph.y - y };
-      this.isCanvasDragging = false;
-    } else {
-      // Begin canvas sweep drag
-      this.isCanvasDragging = true;
-      this.canvasDragStart = { x, y };
-      this.canvasDragMoved = 0;
-    }
-  }
-
-  onPointerMove(e) {
-    const { x, y } = this.getCanvasCoords(e);
-    this.pointer = { x, y };
-    this.isPointerInside = true;
-
-    if (this.grabbedGlyph) {
-      const dragDist = Math.hypot(x - this.grabStartPos.x, y - this.grabStartPos.y);
-      if (dragDist > 4) {
-        this.hasMovedGrab = true;
-      }
-    } else if (this.isCanvasDragging) {
-      const dx = x - this.canvasDragStart.x;
-      const dy = y - this.canvasDragStart.y;
-      this.canvasDragMoved = Math.hypot(dx, dy);
-
-      // Sweep across letters: apply drag wake
-      for (const g of this.glyphs) {
-        const d = Math.hypot(x - g.x, y - g.y);
-        const sweepRadius = 180;
-        if (d < sweepRadius) {
-          const factor = (1 - d / sweepRadius);
-          g.vx += this.pointerVelocity.x * factor * 0.25;
-          g.vy += this.pointerVelocity.y * factor * 0.25;
-          g.vRotation += (this.pointerVelocity.x * 0.002) * factor;
-          for (let s = 0; s < g.slices.length; s++) {
-            g.slices[s].vdx += this.pointerVelocity.x * factor * 0.1;
-          }
-        }
-      }
-    }
-  }
-
-  onPointerUp(e) {
-    const { x, y } = this.getCanvasCoords(e);
-
-    if (this.grabbedGlyph) {
-      const g = this.grabbedGlyph;
-      g.isGrabbed = false;
-
-      if (!this.hasMovedGrab) {
-        // Simple tap on glyph -> trigger local shockwave ripple!
-        this.triggerShockwave(g.x, g.y);
-      } else {
-        // Fling / Recoil: transfer pointer velocity into spring bounce
-        g.vx += this.pointerVelocity.x * 0.85;
-        g.vy += this.pointerVelocity.y * 0.85;
-        g.vRotation += (this.pointerVelocity.x * 0.006);
-        soundEngine.playRelease(Math.hypot(this.pointerVelocity.x, this.pointerVelocity.y) * 0.05);
-      }
-
-      this.grabbedGlyph = null;
-    } else if (this.isCanvasDragging) {
-      this.isCanvasDragging = false;
-      if (this.canvasDragMoved < 8) {
-        // Click on negative space -> acoustic shockwave ripple!
-        this.triggerShockwave(x, y);
-      }
-    }
-  }
-
-  onPointerLeave() {
-    this.isPointerInside = false;
-    this.isCanvasDragging = false;
-    if (this.grabbedGlyph) {
-      this.grabbedGlyph.isGrabbed = false;
-      this.grabbedGlyph = null;
-    }
-  }
-
-  getCanvasCoords(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-    const clientY = e.clientY ?? (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-    return {
-      x: clientX - rect.left,
-      y: clientY - rect.top,
-    };
-  }
-
-  onResize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-
-    this.canvas.width = Math.floor(w * dpr);
-    this.canvas.height = Math.floor(h * dpr);
-    this.canvas.style.width = `${w}px`;
-    this.canvas.style.height = `${h}px`;
-
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.scale(dpr, dpr);
-
-    this.setupGlyphs();
+    this.ripples = [];
+    this.dragOffset = { x: 0, y: 0 };
+    this.dragVelocity = { x: 0, y: 0 };
+    this.isDragging = false;
+    this.isRecoiling = false;
+    this.smoothPointer = { x: 0.5, y: 0.5, vx: 0, vy: 0 };
+    this.pointerVel = { x: 0, y: 0 };
+    this.updateOffscreenText();
   }
 
   bindEvents() {
     const el = this.canvas;
+    el.addEventListener('pointermove', this.handlePointerMove, { passive: false });
     el.addEventListener('pointerdown', this.handlePointerDown, { passive: false });
-    window.addEventListener('pointermove', this.handlePointerMove, { passive: false });
     window.addEventListener('pointerup', this.handlePointerUp, { passive: false });
     el.addEventListener('pointerleave', this.handlePointerLeave);
     window.addEventListener('resize', this.handleResize);
 
+    // Prevent touch scrolling over canvas
     el.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
     el.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
   }
 
   unbindEvents() {
     const el = this.canvas;
+    el.removeEventListener('pointermove', this.handlePointerMove);
     el.removeEventListener('pointerdown', this.handlePointerDown);
-    window.removeEventListener('pointermove', this.handlePointerMove);
     window.removeEventListener('pointerup', this.handlePointerUp);
     el.removeEventListener('pointerleave', this.handlePointerLeave);
     window.removeEventListener('resize', this.handleResize);
   }
 
+  getNormalizedCoords(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    const clientY = e.clientY ?? (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+    const x = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
+    const y = Math.min(Math.max((clientY - rect.top) / rect.height, 0), 1);
+    return { x, y };
+  }
+
+  onPointerMove(e) {
+    const coords = this.getNormalizedCoords(e);
+    this.pointer = coords;
+    this.isPointerInside = true;
+
+    if (this.isDragging) {
+      const dx = coords.x - this.dragStart.x;
+      const dy = coords.y - this.dragStart.y;
+      this.dragOffset.x = dx;
+      this.dragOffset.y = dy;
+      this.dragMovedDistance += Math.hypot(dx, dy);
+    }
+  }
+
+  onPointerDown(e) {
+    const coords = this.getNormalizedCoords(e);
+    this.isDragging = true;
+    this.isRecoiling = false;
+    this.dragStart = coords;
+    this.dragOffset = { x: 0, y: 0 };
+    this.dragVelocity = { x: 0, y: 0 };
+    this.dragMovedDistance = 0;
+  }
+
+  onPointerUp(e) {
+    if (this.isDragging) {
+      const coords = this.getNormalizedCoords(e);
+      this.isDragging = false;
+
+      // Click detection: if user clicked without significant drag movement, trigger ripple!
+      if (this.dragMovedDistance < 0.015) {
+        this.triggerRipple(coords.x, coords.y);
+        this.dragOffset = { x: 0, y: 0 };
+        this.dragVelocity = { x: 0, y: 0 };
+        this.isRecoiling = false;
+      } else {
+        // Drag release: enter damped harmonic spring recoil
+        this.isRecoiling = true;
+        // Inject current pointer velocity into recoil
+        this.dragVelocity.x = this.pointerVel.x * 0.5;
+        this.dragVelocity.y = this.pointerVel.y * 0.5;
+        soundEngine.playRelease(Math.hypot(this.pointerVel.x, this.pointerVel.y));
+      }
+    }
+  }
+
+  onPointerLeave() {
+    this.isPointerInside = false;
+  }
+
+  onResize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    this.canvas.width = Math.floor(width * dpr);
+    this.canvas.height = Math.floor(height * dpr);
+    this.canvas.style.width = `${width}px`;
+    this.canvas.style.height = `${height}px`;
+
+    if (this.gl) {
+      this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    this.updateOffscreenText();
+  }
+
+  /**
+   * Physics step & WebGL render loop
+   */
   startLoop() {
     const loop = (now) => {
-      const dt = Math.min((now - this.lastTime) / 1000.0, 0.035);
+      const dt = Math.min((now - this.lastTime) / 1000.0, 0.05);
       this.lastTime = now;
 
-      this.updatePhysics(dt, now);
+      this.updatePhysics(dt);
       this.render(now);
       this.updateTelemetry(now);
 
@@ -518,349 +534,147 @@ export class LivingTypeEngine {
     this.animFrameId = requestAnimationFrame(loop);
   }
 
-  updatePhysics(dt, now) {
+  updatePhysics(dt) {
     if (dt <= 0) return;
-    const currentTime = (now - this.startTime) / 1000.0;
-    const mat = this.material;
 
-    // Track pointer velocity
+    // 1. Pointer Spring Smoothing & Velocity Tracking
+    const springK = 35.0;
+    const dampingC = 8.5;
+
+    const fx = (this.pointer.x - this.smoothPointer.x) * springK - this.smoothPointer.vx * dampingC;
+    const fy = (this.pointer.y - this.smoothPointer.y) * springK - this.smoothPointer.vy * dampingC;
+
+    this.smoothPointer.vx += fx * dt;
+    this.smoothPointer.vy += fy * dt;
+    this.smoothPointer.x += this.smoothPointer.vx * dt;
+    this.smoothPointer.y += this.smoothPointer.vy * dt;
+
+    // Pointer velocity in normalized UV units per second
     const rawVx = (this.pointer.x - this.prevPointer.x) / dt;
     const rawVy = (this.pointer.y - this.prevPointer.y) / dt;
-    this.pointerVelocity.x += (rawVx - this.pointerVelocity.x) * Math.min(dt * 18, 1);
-    this.pointerVelocity.y += (rawVy - this.pointerVelocity.y) * Math.min(dt * 18, 1);
+    this.pointerVel.x += (rawVx - this.pointerVel.x) * Math.min(dt * 15, 1);
+    this.pointerVel.y += (rawVy - this.pointerVel.y) * Math.min(dt * 15, 1);
     this.prevPointer = { ...this.pointer };
 
-    // Shockwave Propagation & Impulse Transfer
-    for (const wave of this.shockwaves) {
-      const elapsed = currentTime - wave.startTime;
-      if (elapsed > 0 && elapsed < wave.duration) {
-        const waveRadius = elapsed * wave.speed;
-        const waveStrength = Math.exp(-elapsed * wave.decay) * wave.amplitude;
+    // Smooth entry and exit of pointer influence (resting return)
+    const targetActive = this.isPointerInside ? 1.0 : 0.0;
+    this.pointerActive += (targetActive - this.pointerActive) * Math.min(dt * 8.0, 1.0);
 
-        for (const g of this.glyphs) {
-          const dx = g.x - wave.x;
-          const dy = g.y - wave.y;
-          const dist = Math.hypot(dx, dy);
-          const delta = Math.abs(dist - waveRadius);
+    // 2. Drag Spring Recoil Simulation (Damped Harmonic Oscillator)
+    if (this.isRecoiling) {
+      const k = this.material.springStiffness;
+      const c = this.material.springDamping;
 
-          // Impulse window (when wave crest sweeps across letter center)
-          const waveWidth = 70;
-          if (delta < waveWidth) {
-            const factor = (1 - delta / waveWidth) * waveStrength;
-            const normX = dist > 0.001 ? dx / dist : 0;
-            const normY = dist > 0.001 ? dy / dist : -1;
+      const ax = -k * this.dragOffset.x - c * this.dragVelocity.x;
+      const ay = -k * this.dragOffset.y - c * this.dragVelocity.y;
 
-            // Direct impulse
-            const impulse = mat.shockImpulse * factor * dt * 25;
-            g.vx += normX * impulse;
-            g.vy += normY * impulse;
+      this.dragVelocity.x += ax * dt;
+      this.dragVelocity.y += ay * dt;
 
-            // Torque
-            g.vRotation += (normX * 0.4) * factor;
+      this.dragOffset.x += this.dragVelocity.x * dt;
+      this.dragOffset.y += this.dragVelocity.y * dt;
 
-            // Slices compression
-            for (let s = 0; s < g.slices.length; s++) {
-              g.slices[s].vdx += normX * factor * 8;
-              g.slices[s].vdy += normY * factor * 8;
-            }
-          }
-        }
+      // Settling check
+      const speed = Math.hypot(this.dragVelocity.x, this.dragVelocity.y);
+      const dist = Math.hypot(this.dragOffset.x, this.dragOffset.y);
+      if (speed < 0.001 && dist < 0.0005) {
+        this.dragOffset = { x: 0, y: 0 };
+        this.dragVelocity = { x: 0, y: 0 };
+        this.isRecoiling = false;
       }
     }
 
-    // Clean expired shockwaves
-    this.shockwaves = this.shockwaves.filter((w) => currentTime - w.startTime < w.duration);
-
-    // Multi-Glyph Spring Physics Simulation
-    const numGlyphs = this.glyphs.length;
-
-    for (let i = 0; i < numGlyphs; i++) {
-      const g = this.glyphs[i];
-
-      // 1. Idle Restrained Breathing
-      const idleTime = currentTime * 1.8 + i * 0.45;
-      const idleOffsetY = Math.sin(idleTime) * 3.5;
-      const idleRot = Math.cos(idleTime * 0.8) * 0.012;
-
-      // 2. Cursor Hover Proximity Attraction / Gaze
-      let hoverForceX = 0;
-      let hoverForceY = 0;
-      let hoverRotTarget = 0;
-
-      if (this.isPointerInside && !g.isGrabbed) {
-        const dCursor = Math.hypot(this.pointer.x - g.x, this.pointer.y - g.y);
-        const hoverRadius = 220;
-
-        if (dCursor < hoverRadius) {
-          const normD = 1 - dCursor / hoverRadius;
-          const hoverPull = normD * normD * 28;
-          const angleToPtr = Math.atan2(this.pointer.y - g.y, this.pointer.x - g.x);
-
-          hoverForceX = Math.cos(angleToPtr) * hoverPull;
-          hoverForceY = Math.sin(angleToPtr) * hoverPull;
-          hoverRotTarget = (this.pointer.x - g.x) * 0.0008;
-
-          // Velocity wake (stirring the letters as cursor moves fast)
-          const pSpeed = Math.hypot(this.pointerVelocity.x, this.pointerVelocity.y);
-          if (pSpeed > 80) {
-            hoverForceX += this.pointerVelocity.x * normD * 0.08;
-            hoverForceY += this.pointerVelocity.y * normD * 0.08;
-          }
-        }
-      }
-
-      // 3. Direct Grab or Spring Restitution
-      if (g.isGrabbed) {
-        // Follow pointer with hyperelastic resistance
-        const targetX = this.pointer.x + this.grabOffset.x;
-        const targetY = this.pointer.y + this.grabOffset.y;
-
-        const dispX = targetX - g.anchorX;
-        const dispY = targetY - g.anchorY;
-        const stretchDist = Math.hypot(dispX, dispY);
-
-        // Hyperelastic non-linear resistance clamp
-        const maxDist = g.height * mat.maxStretch;
-        let scaleFactor = 1.0;
-        if (stretchDist > maxDist) {
-          scaleFactor = maxDist / stretchDist;
-        }
-
-        g.x = g.anchorX + dispX * scaleFactor;
-        g.y = g.anchorY + dispY * scaleFactor;
-        g.vx = (g.x - g.anchorX) * 0.1;
-        g.vy = (g.y - g.anchorY) * 0.1;
-
-        // Dynamic tilt towards drag vector
-        const dragAngle = Math.atan2(dispY, dispX);
-        const tiltStrength = Math.min(stretchDist / 200, 0.45);
-        g.rotation += ((dragAngle * tiltStrength) - g.rotation) * Math.min(dt * 12, 1);
-
-        // Squash and stretch volume preservation
-        const stretchRatio = Math.min(stretchDist / 180, 0.85);
-        const targetScaleY = 1.0 + stretchRatio * mat.squashStrength;
-        const targetScaleX = 1.0 / targetScaleY;
-        g.scaleX += (targetScaleX - g.scaleX) * Math.min(dt * 15, 1);
-        g.scaleY += (targetScaleY - g.scaleY) * Math.min(dt * 15, 1);
-
-        // Displace slices towards pull point for jelly curvature
-        for (let s = 0; s < g.slices.length; s++) {
-          const sliceNorm = (s / (g.slices.length - 1)) - 0.5; // -0.5 to 0.5
-          const targetSliceDx = sliceNorm * (dispX * 0.35);
-          g.slices[s].dx += (targetSliceDx - g.slices[s].dx) * Math.min(dt * 18, 1);
-        }
-
-      } else {
-        // Damped Harmonic Oscillator (Hooke's Law: F = -k·x - c·v)
-        const targetX = g.anchorX + hoverForceX;
-        const targetY = g.anchorY + idleOffsetY + hoverForceY;
-
-        const k = mat.stiffness;
-        const c = mat.damping;
-
-        const ax = -k * (g.x - targetX) - c * g.vx;
-        const ay = -k * (g.y - targetY) - c * g.vy;
-
-        g.vx += ax * dt;
-        g.vy += ay * dt;
-        g.x += g.vx * dt;
-        g.y += g.vy * dt;
-
-        // Angular Spring
-        const targetRot = idleRot + hoverRotTarget;
-        const rotK = mat.stiffness * 0.8;
-        const rotC = mat.damping * 0.9;
-        const aRot = -rotK * (g.rotation - targetRot) - rotC * g.vRotation;
-        g.vRotation += aRot * dt;
-        g.rotation += g.vRotation * dt;
-
-        // Squash & Stretch Spring Decay back to (1.0, 1.0)
-        const scaleK = 180.0;
-        const scaleC = 12.0;
-        const aScaleX = -scaleK * (g.scaleX - 1.0) - scaleC * g.vScaleX;
-        const aScaleY = -scaleK * (g.scaleY - 1.0) - scaleC * g.vScaleY;
-        g.vScaleX += aScaleX * dt;
-        g.vScaleY += aScaleY * dt;
-        g.scaleX += g.vScaleX * dt;
-        g.scaleY += g.vScaleY * dt;
-
-        // Internal Jelly Slice Springs
-        for (let s = 0; s < g.slices.length; s++) {
-          const sl = g.slices[s];
-          const sliceK = mat.sliceStiffness;
-          const sliceC = mat.sliceDamping;
-          const asx = -sliceK * sl.dx - sliceC * sl.vdx;
-          const asy = -sliceK * sl.dy - sliceC * sl.vdy;
-          sl.vdx += asx * dt;
-          sl.vdy += asy * dt;
-          sl.dx += sl.vdx * dt;
-          sl.dy += sl.vdy * dt;
-        }
-      }
-
-      // 4. Inter-Glyph Elastic Chain Coupling
-      // Pull adjacent letters elastically when one is displaced
-      if (i > 0) {
-        const prev = this.glyphs[i - 1];
-        const dispDiffX = (g.x - g.anchorX) - (prev.x - prev.anchorX);
-        const couplingForceX = dispDiffX * mat.coupling * 20 * dt;
-        if (!prev.isGrabbed) prev.vx += couplingForceX;
-        if (!g.isGrabbed) g.vx -= couplingForceX;
-      }
-      if (i < numGlyphs - 1) {
-        const next = this.glyphs[i + 1];
-        const dispDiffX = (g.x - g.anchorX) - (next.x - next.anchorX);
-        const couplingForceX = dispDiffX * mat.coupling * 20 * dt;
-        if (!next.isGrabbed) next.vx += couplingForceX;
-        if (!g.isGrabbed) g.vx -= couplingForceX;
-      }
-    }
+    // 3. Ripple Decay & Cleanup
+    const currentTime = (performance.now() - this.startTime) / 1000.0;
+    this.ripples = this.ripples.filter((r) => currentTime - r.startTime < r.duration);
   }
 
   render(now) {
-    const { ctx, canvas } = this;
-    const w = canvas.width / (window.devicePixelRatio || 1);
-    const h = canvas.height / (window.devicePixelRatio || 1);
-    const thm = this.theme;
+    const { gl, uniforms } = this;
+    if (!gl || !this.program) return;
+
+    gl.useProgram(this.program);
+
     const currentTime = (now - this.startTime) / 1000.0;
+    const mat = this.material;
+    const thm = this.theme;
 
-    // Clear background
-    ctx.fillStyle = thm.bg;
-    ctx.fillRect(0, 0, w, h);
+    // Resolution
+    gl.uniform2f(uniforms.u_resolution, this.canvas.width, this.canvas.height);
+    gl.uniform1f(uniforms.u_time, currentTime);
 
-    // 1. Draw Acoustic Shockwaves
-    for (const wave of this.shockwaves) {
-      const elapsed = currentTime - wave.startTime;
-      if (elapsed > 0 && elapsed < wave.duration) {
-        const r = elapsed * wave.speed;
-        const alpha = Math.max(0, 1 - elapsed / wave.duration) * 0.45;
+    // Pointer Uniforms
+    gl.uniform2f(uniforms.u_pointer, this.smoothPointer.x, this.smoothPointer.y);
+    gl.uniform2f(uniforms.u_pointer_vel, this.pointerVel.x * 0.05, this.pointerVel.y * 0.05);
+    gl.uniform1f(uniforms.u_pointer_active, this.pointerActive);
+    gl.uniform1f(uniforms.u_hover_radius, mat.hoverRadius);
+    gl.uniform1f(uniforms.u_hover_strength, mat.hoverStrength);
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(wave.x, wave.y, r, 0, Math.PI * 2);
-        ctx.strokeStyle = thm.wave;
-        ctx.lineWidth = Math.max(1, 2.5 * (1 - elapsed / wave.duration));
-        ctx.globalAlpha = alpha;
-        ctx.stroke();
-        ctx.restore();
+    // Drag Uniforms
+    const isDragActive = this.isDragging || this.isRecoiling;
+    gl.uniform2f(uniforms.u_drag_origin, this.dragStart.x, this.dragStart.y);
+    gl.uniform2f(uniforms.u_drag_offset, this.dragOffset.x, this.dragOffset.y);
+    gl.uniform1f(uniforms.u_drag_radius, mat.dragRadius);
+    gl.uniform1f(uniforms.u_drag_active, isDragActive ? 1.0 : 0.0);
+
+    // Ripple Uniforms
+    gl.uniform1i(uniforms.u_ripple_count, this.ripples.length);
+    for (let i = 0; i < this.maxRipples; i++) {
+      const u = this.rippleUniforms[i];
+      if (i < this.ripples.length) {
+        const r = this.ripples[i];
+        gl.uniform2f(u.origin, r.x, r.y);
+        gl.uniform1f(u.startTime, r.startTime);
+        gl.uniform1f(u.speed, r.speed);
+        gl.uniform1f(u.amplitude, r.amplitude);
+        gl.uniform1f(u.frequency, r.frequency);
+        gl.uniform1f(u.decay, r.decay);
+        gl.uniform1f(u.width, r.width);
+        gl.uniform1f(u.duration, r.duration);
+      } else {
+        gl.uniform1f(u.startTime, -999.0);
       }
     }
 
-    // 2. Draw Elastic Tether Hairlines when letters are pulled far
-    for (const g of this.glyphs) {
-      const disp = Math.hypot(g.x - g.anchorX, g.y - g.anchorY);
-      if (disp > 15) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(g.anchorX, g.anchorY);
-        // Subtle bezier curve representing spring tension
-        const midX = (g.anchorX + g.x) / 2;
-        const midY = (g.anchorY + g.y) / 2;
-        ctx.quadraticCurveTo(midX, midY, g.x, g.y);
-        ctx.strokeStyle = thm.tether;
-        ctx.lineWidth = Math.max(0.5, 1.5 * Math.min(disp / 100, 1));
-        ctx.setLineDash([3, 4]);
-        ctx.stroke();
-        ctx.restore();
-      }
-    }
+    // Material & Behavior Uniforms
+    gl.uniform1f(uniforms.u_idle_speed, mat.idleSpeed);
+    gl.uniform1f(uniforms.u_idle_amp, mat.idleAmp);
+    gl.uniform1f(uniforms.u_chromatic_dispersion, mat.chromaticDispersion);
+    gl.uniform1f(uniforms.u_sheen, mat.sheen);
 
-    // 3. Draw Soft Dynamic Contact Shadows beneath each letter
-    for (const g of this.glyphs) {
-      const dispY = g.y - g.anchorY;
-      const shadowY = g.anchorY + g.height * 0.45;
-      const shadowScale = Math.max(0.2, 1 - Math.abs(dispY) / 300);
-      const shadowAlpha = Math.max(0.04, 0.28 * shadowScale);
+    // Theme Colors
+    gl.uniform3f(uniforms.u_color_bg, thm.bg[0], thm.bg[1], thm.bg[2]);
+    gl.uniform3f(uniforms.u_color_text, thm.text[0], thm.text[1], thm.text[2]);
+    gl.uniform3f(uniforms.u_color_accent, thm.accent[0], thm.accent[1], thm.accent[2]);
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.ellipse(
-        g.x,
-        shadowY,
-        (g.width * 0.6) * shadowScale * g.scaleX,
-        (this.fontSize * 0.08) * shadowScale,
-        0,
-        0,
-        Math.PI * 2
-      );
-      ctx.fillStyle = thm.shadow;
-      ctx.globalAlpha = shadowAlpha;
-      ctx.filter = 'blur(6px)';
-      ctx.fill();
-      ctx.restore();
-    }
+    // Bind texture to unit 0
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.uniform1i(uniforms.u_texture, 0);
 
-    // 4. Draw Viscoelastic Sliced Glyphs
-    for (const g of this.glyphs) {
-      ctx.save();
-
-      // Transform to letter center of mass
-      ctx.translate(g.x, g.y);
-      ctx.rotate(g.rotation);
-      ctx.scale(g.scaleX, g.scaleY);
-
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const bw = g.bufferWidth;
-      const bh = g.bufferHeight;
-      const halfW = bw / 2;
-      const halfH = bh / 2;
-
-      // Draw each horizontal slice with internal jelly displacement
-      for (const sl of g.slices) {
-        const sy = sl.y;
-        const sh = sl.h;
-
-        // Destination slice position on canvas with jelly bending
-        const dx = -halfW + sl.dx;
-        const dy = -halfH + sy + sl.dy;
-
-        ctx.drawImage(
-          g.buffer,
-          0,
-          sy * dpr,
-          bw * dpr,
-          sh * dpr,
-          dx,
-          dy,
-          bw,
-          sh
-        );
-      }
-
-      ctx.restore();
-    }
+    // Draw Quad
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
   updateTelemetry(now) {
     this.frameCount++;
-    if (now - this.lastFpsTime >= 500) {
-      this.fps = Math.round((this.frameCount * 1000) / (now - this.lastFpsTime));
+    if (now - this.lastFpsUpdate >= 1000) {
+      this.fps = Math.round((this.frameCount * 1000) / (now - this.lastFpsUpdate));
       this.frameCount = 0;
-      this.lastFpsTime = now;
+      this.lastFpsUpdate = now;
 
       if (this.options.onStatsUpdate) {
         let state = 'Resting';
-        let activeChar = null;
-
-        if (this.grabbedGlyph) {
-          state = `Tugging ‘${this.grabbedGlyph.char}’`;
-          activeChar = this.grabbedGlyph.char;
-        } else if (this.shockwaves.length > 0) {
-          state = 'Shockwave Ripple';
-        } else if (this.isPointerInside) {
-          state = 'Viscoelastic Hover';
-        }
-
-        const totalDisp = this.glyphs.reduce(
-          (sum, g) => sum + Math.hypot(g.x - g.anchorX, g.y - g.anchorY),
-          0
-        );
+        if (this.isDragging) state = 'Tensile Drag';
+        else if (this.isRecoiling) state = 'Spring Recoil';
+        else if (this.ripples.length > 0) state = 'Harmonic Wave';
+        else if (this.isPointerInside) state = 'Attraction';
 
         this.options.onStatsUpdate({
           fps: this.fps,
           state,
-          activeChar,
-          tension: (totalDisp / (this.glyphs.length || 1)).toFixed(1),
+          ripples: this.ripples.length,
+          strain: (Math.hypot(this.dragOffset.x, this.dragOffset.y) * 100).toFixed(1),
         });
       }
     }
@@ -871,5 +685,11 @@ export class LivingTypeEngine {
       cancelAnimationFrame(this.animFrameId);
     }
     this.unbindEvents();
+
+    const { gl } = this;
+    if (gl) {
+      if (this.texture) gl.deleteTexture(this.texture);
+      if (this.program) gl.deleteProgram(this.program);
+    }
   }
 }
