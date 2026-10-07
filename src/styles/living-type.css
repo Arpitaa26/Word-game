@@ -350,76 +350,42 @@ html, body {
   opacity: 0.8;
 }
 
-/* Custom Text Input */
-.text-input-group {
-  background: var(--surface-pill);
-  border: 1px solid var(--border-subtle);
-  border-radius: 100px;
-  padding: 5px 10px 5px 14px;
-  transition: border-color 0.2s ease, background 0.2s ease;
-}
-
-.text-input-group:focus-within {
-  border-color: var(--border-focus);
-  background: var(--surface-active);
-}
-
-.input-prefix {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 0.06em;
-  margin-right: 6px;
-}
-
-.editorial-input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  width: 105px;
-  text-transform: uppercase;
-}
-
-.editorial-input::placeholder {
-  color: var(--text-muted);
-  font-weight: 400;
-}
-
+/* Words Presets Control */
 .preset-chips {
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin-left: 4px;
+  gap: 3px;
+  background: var(--surface-pill);
+  border: 1px solid var(--border-subtle);
+  border-radius: 100px;
+  padding: 3px;
 }
 
 .chip-btn {
   background: transparent;
-  border: 1px solid transparent;
-  color: var(--text-muted);
+  border: none;
+  outline: none;
+  color: var(--text-secondary);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  padding: 5px 10px;
+  letter-spacing: 0.05em;
+  padding: 6px 12px;
   border-radius: 100px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
 }
 
 .chip-btn:hover {
   color: var(--text-primary);
-  background: var(--surface-pill);
 }
 
 .chip-btn.active {
   color: var(--text-primary);
   background: var(--surface-active);
-  border-color: var(--border-subtle);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 /* Segmented Controls */
@@ -565,7 +531,7 @@ html, body {
    =================================================================== */
 .interaction-guide {
   position: absolute;
-  bottom: 92px;
+  bottom: 96px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;

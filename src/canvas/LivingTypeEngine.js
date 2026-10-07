@@ -5,6 +5,7 @@ export const MATERIAL_PRESETS = {
   silicone: {
     name: 'Silicone',
     description: 'Soft, supple viscoelastic bounce with balanced elasticity',
+    modeIndex: 0,
     hoverStrength: 0.045,
     hoverRadius: 0.35,
     dragRadius: 0.42,
@@ -22,25 +23,27 @@ export const MATERIAL_PRESETS = {
   },
   fluidInk: {
     name: 'Fluid Gel',
-    description: 'Viscous, wave-like deformation with lingering ripples',
-    hoverStrength: 0.068,
-    hoverRadius: 0.45,
-    dragRadius: 0.50,
-    springStiffness: 42.0,
-    springDamping: 6.0,
-    rippleSpeed: 0.30,
-    rippleAmp: 0.075,
-    rippleFreq: 20.0,
-    rippleDecay: 0.95,
-    rippleWidth: 0.17,
-    idleSpeed: 0.60,
-    idleAmp: 1.2,
-    chromaticDispersion: 1.4,
-    sheen: 0.9,
+    description: 'Viscous liquid vorticity, swirling currents & undulating fluid waves',
+    modeIndex: 1,
+    hoverStrength: 0.075,
+    hoverRadius: 0.48,
+    dragRadius: 0.52,
+    springStiffness: 38.0,
+    springDamping: 5.5,
+    rippleSpeed: 0.28,
+    rippleAmp: 0.085,
+    rippleFreq: 18.0,
+    rippleDecay: 0.85,
+    rippleWidth: 0.18,
+    idleSpeed: 0.65,
+    idleAmp: 1.4,
+    chromaticDispersion: 1.6,
+    sheen: 0.95,
   },
   latexTension: {
     name: 'Tension',
     description: 'High tensile resistance with snappy, rapid elastic recoil',
+    modeIndex: 2,
     hoverStrength: 0.032,
     hoverRadius: 0.26,
     dragRadius: 0.32,
@@ -266,6 +269,7 @@ export class LivingTypeEngine {
       u_color_bg: gl.getUniformLocation(program, 'u_color_bg'),
       u_color_text: gl.getUniformLocation(program, 'u_color_text'),
       u_color_accent: gl.getUniformLocation(program, 'u_color_accent'),
+      u_material_mode: gl.getUniformLocation(program, 'u_material_mode'),
     };
 
     // Cache ripple struct uniforms
@@ -637,6 +641,7 @@ export class LivingTypeEngine {
     }
 
     // Material & Behavior Uniforms
+    gl.uniform1i(uniforms.u_material_mode, mat.modeIndex !== undefined ? mat.modeIndex : 0);
     gl.uniform1f(uniforms.u_idle_speed, mat.idleSpeed);
     gl.uniform1f(uniforms.u_idle_amp, mat.idleAmp);
     gl.uniform1f(uniforms.u_chromatic_dispersion, mat.chromaticDispersion);

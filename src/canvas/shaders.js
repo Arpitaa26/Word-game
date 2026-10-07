@@ -1,8 +1,10 @@
 /**
  * LIVING TYPE — Shaders
  * Vertex and Fragment shaders for soft physical typography simulation.
- * Evaluates continuous viscoelastic deformation, acoustic wave ripples,
- * tensile drag strain, and micro-refractive edge optics.
+ * Includes distinct physical material modes:
+ * - 0: Silicone Rubber (soft elastic soft-body)
+ * - 1: Fluid Gel (liquid vorticity, hydrodynamic swirl, fluid wave undulation)
+ * - 2: Tension (taut, snappy magnetic spring recoil)
  */
 
 export const VERTEX_SHADER_SOURCE = `
@@ -24,6 +26,9 @@ export const FRAGMENT_SHADER_SOURCE = `
   uniform sampler2D u_texture;
   uniform vec2 u_resolution;
   uniform float u_time;
+
+  // Material Mode: 0 = Silicone Rubber, 1 = Fluid Gel, 2 = Tension
+  uniform int u_material_mode;
 
   // Pointer Proximity Interaction
   uniform vec2 u_pointer;          // normalized [0, 1]
@@ -68,37 +73,62 @@ export const FRAGMENT_SHADER_SOURCE = `
     vec2 p = v_uv;
     vec2 p_aspect = vec2(v_uv.x * aspect, v_uv.y);
 
-    // 1. Idle Restrained Organic Breathing
+    // 1. Idle Movement tailored per material
     float t_idle = u_time * u_idle_speed;
-    vec2 idle_disp = vec2(
-      sin(p_aspect.y * 3.8 + t_idle * 0.75) * 0.0025 + cos(p_aspect.x * 2.2 + t_idle * 0.55) * 0.0018,
-      cos(p_aspect.x * 3.2 + t_idle * 0.85) * 0.0022 + sin(p_aspect.y * 2.6 + t_idle * 0.45) * 0.0016
-    ) * u_idle_amp;
+    vec2 idle_disp = vec2(0.0);
 
-    // 2. Cursor Proximity / Viscoelastic Attraction
+    if (u_material_mode == 1) {
+      // FLUID GEL: Viscous liquid wave undulation & surface convection
+      float wave_a = sin(p_aspect.y * 7.0 + t_idle * 1.5) * cos(p_aspect.x * 5.5 + t_idle * 1.1);
+      float wave_b = cos(p_aspect.x * 6.5 + t_idle * 1.3) * sin(p_aspect.y * 4.8 + t_idle * 0.9);
+      idle_disp = vec2(wave_a, wave_b) * 0.006 * u_idle_amp;
+    } else if (u_material_mode == 2) {
+      // TENSION: Subtle taut harmonic hum
+      float hum = sin(t_idle * 2.5) * 0.0009 * u_idle_amp;
+      idle_disp = vec2(sin(p_aspect.y * 14.0) * hum, cos(p_aspect.x * 14.0) * hum);
+    } else {
+      // SILICONE: Restrained soft organic breathing
+      idle_disp = vec2(
+        sin(p_aspect.y * 3.8 + t_idle * 0.75) * 0.0025 + cos(p_aspect.x * 2.2 + t_idle * 0.55) * 0.0018,
+        cos(p_aspect.x * 3.2 + t_idle * 0.85) * 0.0022 + sin(p_aspect.y * 2.6 + t_idle * 0.45) * 0.0016
+      ) * u_idle_amp;
+    }
+
+    // 2. Cursor Proximity / Dynamic Deformation
     vec2 hover_disp = vec2(0.0);
     if (u_pointer_active > 0.01) {
       vec2 ptr_aspect = vec2(u_pointer.x * aspect, u_pointer.y);
       float d_ptr = length(p_aspect - ptr_aspect);
       
       if (d_ptr < u_hover_radius) {
-        // Smooth exponential-cubic falloff for soft magnetic feel
         float norm_d = d_ptr / u_hover_radius;
-        float falloff = (1.0 - norm_d) * exp(-norm_d * 2.0);
-        falloff = clamp(falloff, 0.0, 1.0) * u_pointer_active;
-
+        float falloff = (1.0 - norm_d) * exp(-norm_d * 2.0) * u_pointer_active;
         vec2 to_ptr = (d_ptr > 0.0001) ? (ptr_aspect - p_aspect) / d_ptr : vec2(0.0);
-        
-        // Elastic pull towards cursor
-        hover_disp += to_ptr * falloff * u_hover_strength;
-
-        // Viscous wake from pointer velocity
         vec2 vel_aspect = vec2(u_pointer_vel.x * aspect, u_pointer_vel.y);
-        hover_disp += vel_aspect * falloff * 0.10;
+
+        if (u_material_mode == 1) {
+          // FLUID GEL: Hydrodynamic vortex swirl + viscous wake
+          // Perpendicular rotational vector creates liquid eddy currents!
+          vec2 vortex_curl = vec2(-to_ptr.y, to_ptr.x);
+          float vel_mag = length(vel_aspect);
+
+          // Blend radial suction with rotational liquid curl
+          hover_disp += to_ptr * falloff * u_hover_strength * 0.85;
+          hover_disp += vortex_curl * falloff * (0.045 + vel_mag * 0.35);
+          hover_disp += vel_aspect * falloff * 0.22;
+        } else if (u_material_mode == 2) {
+          // TENSION: Crisp directional magnetic pull
+          hover_disp += to_ptr * falloff * u_hover_strength * 0.95;
+          hover_disp += vel_aspect * falloff * 0.05;
+        } else {
+          // SILICONE: Smooth viscoelastic attraction
+          hover_disp += to_ptr * falloff * u_hover_strength;
+          hover_disp += vel_aspect * falloff * 0.10;
+        }
       }
     }
 
-    // 3. Drag Interaction (Tensile Stretch & Damped Spring Recoil)
+    // 3. Drag Interaction (Tensile Stretch & Recoil)
     vec2 drag_disp = vec2(0.0);
     if (u_drag_active > 0.01) {
       vec2 drag_origin_aspect = vec2(u_drag_origin.x * aspect, u_drag_origin.y);
@@ -106,11 +136,16 @@ export const FRAGMENT_SHADER_SOURCE = `
       
       if (d_drag < u_drag_radius) {
         float norm_drag = d_drag / u_drag_radius;
-        // Smooth bell curve falloff around grab origin
         float drag_weight = smoothstep(1.0, 0.0, norm_drag);
         drag_weight = pow(drag_weight, 1.6);
         
         drag_disp = u_drag_offset * drag_weight;
+
+        // In fluid gel, add liquid shear along drag vector
+        if (u_material_mode == 1) {
+          vec2 perp_drag = vec2(-u_drag_offset.y, u_drag_offset.x) * 0.3;
+          drag_disp += perp_drag * sin(norm_drag * 3.1415) * 0.4;
+        }
       }
     }
 
@@ -131,10 +166,24 @@ export const FRAGMENT_SHADER_SOURCE = `
         // Exponential temporal decay
         float decay = exp(-elapsed * u_ripples[i].decay);
 
-        float wave = sin(delta * u_ripples[i].frequency) * env * decay * u_ripples[i].amplitude;
         vec2 rip_dir = (d_rip > 0.0001) ? (p_aspect - rip_origin_aspect) / d_rip : vec2(0.0, 1.0);
-        
-        ripple_disp += rip_dir * wave;
+
+        if (u_material_mode == 1) {
+          // FLUID GEL: Dual harmonic ripples with surface undulation
+          float wave1 = sin(delta * u_ripples[i].frequency);
+          float wave2 = sin(delta * u_ripples[i].frequency * 1.8 + elapsed * 2.5) * 0.35;
+          float total_wave = (wave1 + wave2) * env * decay * u_ripples[i].amplitude * 1.25;
+          vec2 liquid_curl = vec2(-rip_dir.y, rip_dir.x) * 0.2;
+          ripple_disp += (rip_dir + liquid_curl) * total_wave;
+        } else if (u_material_mode == 2) {
+          // TENSION: Crisp high-frequency acoustic shock
+          float wave = sin(delta * u_ripples[i].frequency * 1.25) * env * decay * u_ripples[i].amplitude;
+          ripple_disp += rip_dir * wave;
+        } else {
+          // SILICONE: Pure harmonic rubber ripple
+          float wave = sin(delta * u_ripples[i].frequency) * env * decay * u_ripples[i].amplitude;
+          ripple_disp += rip_dir * wave;
+        }
       }
     }
 
@@ -146,7 +195,7 @@ export const FRAGMENT_SHADER_SOURCE = `
     // Strain magnitude (physical tension)
     float strain = length(hover_disp + drag_disp + ripple_disp);
 
-    // Physical Micro-Chromatic Dispersion on tensile strain
+    // Micro-Chromatic Dispersion on tensile strain
     float disp_offset = strain * u_chromatic_dispersion * 0.008;
     vec2 strain_dir = (strain > 0.0001) ? normalize(total_disp_uv) : vec2(0.0);
 
@@ -163,14 +212,12 @@ export const FRAGMENT_SHADER_SOURCE = `
       alpha_center = 0.0;
     }
 
-    // Surface Tension Micro-Sheen / Emboss Relief
-    // Evaluates finite-difference normal along text boundary
+    // Surface Relief / Micro-Sheen
     vec2 eps = vec2(1.0 / u_resolution.x, 1.0 / u_resolution.y) * 1.5;
     float a_right = texture2D(u_texture, deformed_uv + vec2(eps.x, 0.0)).a;
     float a_up    = texture2D(u_texture, deformed_uv + vec2(0.0, eps.y)).a;
     vec2 normal2d = vec2(alpha_center - a_right, alpha_center - a_up);
     
-    // Top-left editorial light vector
     vec2 light_dir = normalize(vec2(-0.7, 0.7));
     float relief = clamp(dot(normal2d, light_dir) * 2.5, 0.0, 1.0) * strain * u_sheen;
 

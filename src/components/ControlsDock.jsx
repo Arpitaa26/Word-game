@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { RotateCcw, Sun, Moon, Type, Layers } from 'lucide-react';
 import { MATERIAL_PRESETS } from '../canvas/LivingTypeEngine';
 
@@ -15,14 +15,6 @@ export function ControlsDock({
   setThemeKey,
   onReset,
 }) {
-  const inputRef = useRef(null);
-
-  const handleInputChange = (e) => {
-    const val = e.target.value.toUpperCase();
-    if (val.length <= 16) {
-      setText(val);
-    }
-  };
 
   const handleThemeToggle = () => {
     setThemeKey((prev) => (prev === 'obsidian' ? 'alabaster' : 'obsidian'));
@@ -36,23 +28,11 @@ export function ControlsDock({
 
   return (
     <nav className="controls-dock" aria-label="Living Type controls">
-      {/* 1. Custom Text Input Pill */}
-      <div className="dock-section text-input-group">
-        <label htmlFor="custom-type-input" className="sr-only">Custom Typography</label>
-        <span className="input-prefix">TXT</span>
-        <input
-          id="custom-type-input"
-          ref={inputRef}
-          type="text"
-          value={text}
-          onChange={handleInputChange}
-          placeholder="TYPE WORD..."
-          maxLength={14}
-          className="editorial-input"
-          autoComplete="off"
-          spellCheck="false"
-        />
-        {/* Quick Preset Buttons */}
+      {/* 1. Quick Word Presets */}
+      <div className="dock-section presets-group">
+        <span className="dock-label">
+          <span>WORDS</span>
+        </span>
         <div className="preset-chips">
           {PRESET_WORDS.map((word) => (
             <button
