@@ -3,13 +3,25 @@ import { LivingCanvas } from './components/LivingCanvas';
 import { EditorialHeader } from './components/EditorialHeader';
 import { ControlsDock } from './components/ControlsDock';
 import { InteractionGuide } from './components/InteractionGuide';
+import { ArcadeGameOverlay } from './components/ArcadeGameOverlay';
+import { FloatingArcadeTrigger } from './components/FloatingArcadeTrigger';
 import './styles/living-type.css';
+
+const STORAGE_KEY = 'living_type_arcade_highscore';
 
 export default function App() {
   const [text, setText] = useState('CREATE');
   const [fontFamily, setFontFamily] = useState('Syne');
   const [materialKey, setMaterialKey] = useState('silicone');
   const [themeKey, setThemeKey] = useState('obsidian');
+  const [isArcadeMode, setIsArcadeMode] = useState(false);
+  const [highScore] = useState(() => {
+    try {
+      return parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+    } catch {
+      return 0;
+    }
+  });
   const [stats, setStats] = useState({
     fps: 60,
     state: 'Resting',
@@ -20,12 +32,10 @@ export default function App() {
 
   const canvasRef = useRef(null);
 
-  // Sync theme attribute to root
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', themeKey);
   }, [themeKey]);
 
-  // Handle telemetry updates from canvas engine
   const handleStatsUpdate = useCallback((newStats) => {
     setStats(newStats);
     if (newStats.state !== 'Resting') {
@@ -33,7 +43,6 @@ export default function App() {
     }
   }, []);
 
-  // Reset to default resting state
   const handleReset = useCallback(() => {
     setText('CREATE');
     setMaterialKey('silicone');
@@ -42,10 +51,8 @@ export default function App() {
     }
   }, []);
 
-  // Keyboard shortcut [R] for reset
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ignore if user is currently typing in an input or textarea
       if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
         if (e.key === 'Escape') {
           e.target.blur();
@@ -53,18 +60,17 @@ export default function App() {
         return;
       }
 
-      if (e.key.toLowerCase() === 'r') {
+      if (e.key.toLowerCase() === 'r' && !isArcadeMode) {
         handleReset();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleReset]);
+  }, [handleReset, isArcadeMode]);
 
   return (
     <main className="app-container" data-theme={themeKey}>
-      {/* 1. Background WebGL Soft Physical Typography Canvas */}
       <LivingCanvas
         ref={canvasRef}
         text={text}
@@ -74,7 +80,6 @@ export default function App() {
         onStatsUpdate={handleStatsUpdate}
       />
 
-      {/* 2. Top Editorial Header with Custom Typing & Telemetry */}
       <EditorialHeader
         stats={stats}
         themeKey={themeKey}
@@ -82,10 +87,26 @@ export default function App() {
         setText={setText}
       />
 
-      {/* 4. Subtle Interaction Cues / Guide */}
-      <InteractionGuide hasInteracted={hasInteracted} />
+      {isArcadeMode && (
+        <ArcadeGameOverlay
+          engineRef={canvasRef}
+          text={text}
+          setText={setText}
+          themeKey={themeKey}
+          onClose={() => setIsArcadeMode(false)}
+        />
+      )}
 
-      {/* 5. Minimal Bottom Controls Dock */}
+      {!isArcadeMode && (
+        <FloatingArcadeTrigger
+          onClick={() => setIsArcadeMode(true)}
+          highScore={highScore}
+          themeKey={themeKey}
+        />
+      )}
+
+      {!isArcadeMode && <InteractionGuide hasInteracted={hasInteracted} />}
+
       <ControlsDock
         text={text}
         setText={setText}
@@ -96,6 +117,8 @@ export default function App() {
         themeKey={themeKey}
         setThemeKey={setThemeKey}
         onReset={handleReset}
+        isArcadeMode={isArcadeMode}
+        setIsArcadeMode={setIsArcadeMode}
       />
     </main>
   );

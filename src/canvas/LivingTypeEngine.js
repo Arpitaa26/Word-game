@@ -64,16 +64,16 @@ export const MATERIAL_PRESETS = {
 export const COLOR_THEMES = {
   obsidian: {
     name: 'Obsidian Noir',
-    bg: [0.043, 0.043, 0.051], // #0B0B0D
-    text: [0.965, 0.961, 0.949], // #F6F5F2
+    bg: [0.043, 0.043, 0.051],
+    text: [0.965, 0.961, 0.949],
     accent: [0.78, 0.76, 0.72],
     hexBg: '#0B0B0D',
     hexText: '#F6F5F2',
   },
   alabaster: {
     name: 'Alabaster Paper',
-    bg: [0.965, 0.961, 0.945], // #F6F5F1
-    text: [0.04, 0.04, 0.045], // #0A0A0C
+    bg: [0.965, 0.961, 0.945],
+    text: [0.04, 0.04, 0.045],
     accent: [0.22, 0.22, 0.22],
     hexBg: '#F6F5F1',
     hexText: '#0A0A0C',
@@ -99,12 +99,10 @@ export class LivingTypeEngine {
     this.offscreenCtx = this.offscreenCanvas.getContext('2d');
     this.texture = null;
 
-    // Simulation Timing
     this.startTime = performance.now();
     this.lastTime = performance.now();
     this.animFrameId = null;
 
-    // Pointer State
     this.pointer = { x: 0.5, y: 0.5 };
     this.prevPointer = { x: 0.5, y: 0.5 };
     this.smoothPointer = { x: 0.5, y: 0.5, vx: 0, vy: 0 };
@@ -112,7 +110,6 @@ export class LivingTypeEngine {
     this.isPointerInside = false;
     this.pointerActive = 0.0;
 
-    // Drag & Spring Recoil State
     this.isDragging = false;
     this.dragStart = { x: 0, y: 0 };
     this.dragOffset = { x: 0, y: 0 };
@@ -120,26 +117,21 @@ export class LivingTypeEngine {
     this.isRecoiling = false;
     this.dragMovedDistance = 0;
 
-    // Ripples (Max 8 bounded for solid 60/120fps performance)
     this.ripples = [];
     this.maxRipples = 8;
 
-    // Material & Theme
     this.materialKey = this.options.materialKey;
     this.material = MATERIAL_PRESETS[this.materialKey];
     this.themeKey = this.options.themeKey;
     this.theme = COLOR_THEMES[this.themeKey];
 
-    // Typographic State
     this.text = this.options.text;
     this.fontFamily = this.options.fontFamily;
 
-    // Performance & Telemetry
     this.frameCount = 0;
     this.fps = 60;
     this.lastFpsUpdate = performance.now();
 
-    // Bound listeners for clean cleanup
     this.handlePointerMove = this.onPointerMove.bind(this);
     this.handlePointerDown = this.onPointerDown.bind(this);
     this.handlePointerUp = this.onPointerUp.bind(this);
@@ -172,7 +164,6 @@ export class LivingTypeEngine {
     });
 
     if (!gl) {
-      console.warn('[LivingType] WebGL not supported, falling back to experimental-webgl');
       this.gl = this.canvas.getContext('experimental-webgl');
     } else {
       this.gl = gl;
@@ -184,11 +175,9 @@ export class LivingTypeEngine {
 
     const { gl: ctx } = this;
 
-    // Compile Shaders
     const vertShader = this.compileShader(ctx.VERTEX_SHADER, VERTEX_SHADER_SOURCE);
     const fragShader = this.compileShader(ctx.FRAGMENT_SHADER, FRAGMENT_SHADER_SOURCE);
 
-    // Link Program
     const prog = ctx.createProgram();
     ctx.attachShader(prog, vertShader);
     ctx.attachShader(prog, fragShader);
@@ -203,7 +192,6 @@ export class LivingTypeEngine {
     this.program = prog;
     ctx.useProgram(prog);
 
-    // Fullscreen Quad Buffer
     const positionBuffer = ctx.createBuffer();
     ctx.bindBuffer(ctx.ARRAY_BUFFER, positionBuffer);
     const quadVertices = new Float32Array([
@@ -220,10 +208,8 @@ export class LivingTypeEngine {
     ctx.enableVertexAttribArray(aPos);
     ctx.vertexAttribPointer(aPos, 2, ctx.FLOAT, false, 0, 0);
 
-    // Cache Uniform Locations
     this.cacheUniforms();
 
-    // Create Text Texture
     this.texture = ctx.createTexture();
     ctx.bindTexture(ctx.TEXTURE_2D, this.texture);
     ctx.texParameteri(ctx.TEXTURE_2D, ctx.TEXTURE_WRAP_S, ctx.CLAMP_TO_EDGE);
@@ -272,7 +258,6 @@ export class LivingTypeEngine {
       u_material_mode: gl.getUniformLocation(program, 'u_material_mode'),
     };
 
-    // Cache ripple struct uniforms
     this.rippleUniforms = [];
     for (let i = 0; i < this.maxRipples; i++) {
       this.rippleUniforms.push({
@@ -288,10 +273,6 @@ export class LivingTypeEngine {
     }
   }
 
-  /**
-   * Render high-definition crisp editorial typography to offscreen canvas
-   * Automatically adapts font size, weight, and layout to fit screen gracefully.
-   */
   updateOffscreenText() {
     const width = this.canvas.width || window.innerWidth * 2;
     const height = this.canvas.height || window.innerHeight * 2;
@@ -304,7 +285,6 @@ export class LivingTypeEngine {
 
     const textToRender = (this.text || 'CREATE').trim();
 
-    // Determine font styling
     let fontWeight = '700';
     let fontStyle = 'normal';
     let letterSpacing = '-0.04em';
@@ -322,32 +302,26 @@ export class LivingTypeEngine {
       ctx.letterSpacing = letterSpacing;
     }
 
-    // Adaptive Font Sizing
-    // Target typography to fill approx 60-75% of screen width while leaving generous negative space
     const targetWidth = width * 0.72;
     let fontSize = Math.min(width * 0.22, height * 0.35);
 
     ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${this.fontFamily}", sans-serif`;
     let measured = ctx.measureText(textToRender).width;
 
-    // Scale font size down if word exceeds generous negative margins
     if (measured > targetWidth) {
       fontSize = fontSize * (targetWidth / measured);
       ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px "${this.fontFamily}", sans-serif`;
     }
 
-    // High Quality Rasterization
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#FFFFFF'; // Pure white alpha mask
+    ctx.fillStyle = '#FFFFFF';
 
-    // Center coordinates
     const centerX = width / 2;
     const centerY = height / 2;
 
     ctx.fillText(textToRender, centerX, centerY);
 
-    // Upload texture to WebGL
     const { gl } = this;
     if (gl && this.texture) {
       gl.bindTexture(gl.TEXTURE_2D, this.texture);
@@ -400,12 +374,11 @@ export class LivingTypeEngine {
       duration: 3.2,
     };
 
-    // Keep bounded array
     if (this.ripples.length >= this.maxRipples) {
       this.ripples.shift();
     }
     this.ripples.push(newRipple);
-    soundEngine.playRipple();
+    soundEngine.playRipple(x);
   }
 
   reset() {
@@ -430,7 +403,6 @@ export class LivingTypeEngine {
     el.addEventListener('pointerleave', this.handlePointerLeave);
     window.addEventListener('resize', this.handleResize);
 
-    // Prevent touch scrolling over canvas
     el.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
     el.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
   }
@@ -482,16 +454,13 @@ export class LivingTypeEngine {
       const coords = this.getNormalizedCoords(e);
       this.isDragging = false;
 
-      // Click detection: if user clicked without significant drag movement, trigger ripple!
       if (this.dragMovedDistance < 0.015) {
         this.triggerRipple(coords.x, coords.y);
         this.dragOffset = { x: 0, y: 0 };
         this.dragVelocity = { x: 0, y: 0 };
         this.isRecoiling = false;
       } else {
-        // Drag release: enter damped harmonic spring recoil
         this.isRecoiling = true;
-        // Inject current pointer velocity into recoil
         this.dragVelocity.x = this.pointerVel.x * 0.5;
         this.dragVelocity.y = this.pointerVel.y * 0.5;
         soundEngine.playRelease(Math.hypot(this.pointerVel.x, this.pointerVel.y));
@@ -520,9 +489,6 @@ export class LivingTypeEngine {
     this.updateOffscreenText();
   }
 
-  /**
-   * Physics step & WebGL render loop
-   */
   startLoop() {
     const loop = (now) => {
       const dt = Math.min((now - this.lastTime) / 1000.0, 0.05);
@@ -541,7 +507,6 @@ export class LivingTypeEngine {
   updatePhysics(dt) {
     if (dt <= 0) return;
 
-    // 1. Pointer Spring Smoothing & Velocity Tracking
     const springK = 20.0;
     const dampingC = 6.8;
 
@@ -553,18 +518,15 @@ export class LivingTypeEngine {
     this.smoothPointer.x += this.smoothPointer.vx * dt;
     this.smoothPointer.y += this.smoothPointer.vy * dt;
 
-    // Pointer velocity in normalized UV units per second
     const rawVx = (this.pointer.x - this.prevPointer.x) / dt;
     const rawVy = (this.pointer.y - this.prevPointer.y) / dt;
     this.pointerVel.x += (rawVx - this.pointerVel.x) * Math.min(dt * 8, 1);
     this.pointerVel.y += (rawVy - this.pointerVel.y) * Math.min(dt * 8, 1);
     this.prevPointer = { ...this.pointer };
 
-    // Smooth entry and exit of pointer influence (resting return)
     const targetActive = this.isPointerInside ? 1.0 : 0.0;
     this.pointerActive += (targetActive - this.pointerActive) * Math.min(dt * 3.8, 1.0);
 
-    // 2. Drag Spring Recoil Simulation (Damped Harmonic Oscillator)
     if (this.isRecoiling) {
       const k = this.material.springStiffness;
       const c = this.material.springDamping;
@@ -578,7 +540,6 @@ export class LivingTypeEngine {
       this.dragOffset.x += this.dragVelocity.x * dt;
       this.dragOffset.y += this.dragVelocity.y * dt;
 
-      // Settling check
       const speed = Math.hypot(this.dragVelocity.x, this.dragVelocity.y);
       const dist = Math.hypot(this.dragOffset.x, this.dragOffset.y);
       if (speed < 0.001 && dist < 0.0005) {
@@ -588,7 +549,6 @@ export class LivingTypeEngine {
       }
     }
 
-    // 3. Ripple Decay & Cleanup
     const currentTime = (performance.now() - this.startTime) / 1000.0;
     this.ripples = this.ripples.filter((r) => currentTime - r.startTime < r.duration);
   }
@@ -603,25 +563,21 @@ export class LivingTypeEngine {
     const mat = this.material;
     const thm = this.theme;
 
-    // Resolution
     gl.uniform2f(uniforms.u_resolution, this.canvas.width, this.canvas.height);
     gl.uniform1f(uniforms.u_time, currentTime);
 
-    // Pointer Uniforms
     gl.uniform2f(uniforms.u_pointer, this.smoothPointer.x, this.smoothPointer.y);
     gl.uniform2f(uniforms.u_pointer_vel, this.pointerVel.x * 0.05, this.pointerVel.y * 0.05);
     gl.uniform1f(uniforms.u_pointer_active, this.pointerActive);
     gl.uniform1f(uniforms.u_hover_radius, mat.hoverRadius);
     gl.uniform1f(uniforms.u_hover_strength, mat.hoverStrength);
 
-    // Drag Uniforms
     const isDragActive = this.isDragging || this.isRecoiling;
     gl.uniform2f(uniforms.u_drag_origin, this.dragStart.x, this.dragStart.y);
     gl.uniform2f(uniforms.u_drag_offset, this.dragOffset.x, this.dragOffset.y);
     gl.uniform1f(uniforms.u_drag_radius, mat.dragRadius);
     gl.uniform1f(uniforms.u_drag_active, isDragActive ? 1.0 : 0.0);
 
-    // Ripple Uniforms
     gl.uniform1i(uniforms.u_ripple_count, this.ripples.length);
     for (let i = 0; i < this.maxRipples; i++) {
       const u = this.rippleUniforms[i];
@@ -640,24 +596,20 @@ export class LivingTypeEngine {
       }
     }
 
-    // Material & Behavior Uniforms
     gl.uniform1i(uniforms.u_material_mode, mat.modeIndex !== undefined ? mat.modeIndex : 0);
     gl.uniform1f(uniforms.u_idle_speed, mat.idleSpeed);
     gl.uniform1f(uniforms.u_idle_amp, mat.idleAmp);
     gl.uniform1f(uniforms.u_chromatic_dispersion, mat.chromaticDispersion);
     gl.uniform1f(uniforms.u_sheen, mat.sheen);
 
-    // Theme Colors
     gl.uniform3f(uniforms.u_color_bg, thm.bg[0], thm.bg[1], thm.bg[2]);
     gl.uniform3f(uniforms.u_color_text, thm.text[0], thm.text[1], thm.text[2]);
     gl.uniform3f(uniforms.u_color_accent, thm.accent[0], thm.accent[1], thm.accent[2]);
 
-    // Bind texture to unit 0
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.uniform1i(uniforms.u_texture, 0);
 
-    // Draw Quad
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 

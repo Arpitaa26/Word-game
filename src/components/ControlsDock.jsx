@@ -1,5 +1,5 @@
 import React from 'react';
-import { RotateCcw, Sun, Moon, Type, Layers } from 'lucide-react';
+import { RotateCcw, Sun, Moon, Type, Layers, Gamepad2 } from 'lucide-react';
 import { MATERIAL_PRESETS } from '../canvas/LivingTypeEngine';
 
 const PRESET_WORDS = ['CREATE', 'ELASTIC', 'KINETIC', 'DODO', 'FORM'];
@@ -14,8 +14,9 @@ export function ControlsDock({
   themeKey,
   setThemeKey,
   onReset,
+  isArcadeMode,
+  setIsArcadeMode,
 }) {
-
   const handleThemeToggle = () => {
     setThemeKey((prev) => (prev === 'obsidian' ? 'alabaster' : 'obsidian'));
   };
@@ -28,7 +29,6 @@ export function ControlsDock({
 
   return (
     <nav className="controls-dock" aria-label="Living Type controls">
-      {/* 1. Quick Word Presets */}
       <div className="dock-section presets-group">
         <span className="dock-label">
           <span>WORDS</span>
@@ -49,7 +49,6 @@ export function ControlsDock({
 
       <div className="dock-separator" />
 
-      {/* 2. Material Selector */}
       <div className="dock-section material-group">
         <span className="dock-label">
           <Layers size={15} className="dock-icon" />
@@ -72,7 +71,6 @@ export function ControlsDock({
 
       <div className="dock-separator" />
 
-      {/* 3. Typography Family Selector */}
       <div className="dock-section font-group">
         <span className="dock-label">
           <Type size={15} className="dock-icon" />
@@ -94,8 +92,18 @@ export function ControlsDock({
 
       <div className="dock-separator" />
 
-      {/* 4. Action Buttons: Theme Toggle & Reset */}
       <div className="dock-section actions-group">
+        <button
+          type="button"
+          onClick={() => setIsArcadeMode((prev) => !prev)}
+          className={`dock-action-btn arcade-dock-btn ${isArcadeMode ? 'active' : ''}`}
+          title={isArcadeMode ? 'Exit Arcade Game' : 'Play Kinetic Arcade Game'}
+          aria-label="Toggle arcade game"
+        >
+          <Gamepad2 size={15} />
+          <span>{isArcadeMode ? 'ARCADE ON' : 'PLAY'}</span>
+        </button>
+
         <button
           type="button"
           onClick={handleThemeToggle}

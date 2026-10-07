@@ -39,7 +39,6 @@ export const LivingCanvas = forwardRef(function LivingCanvas(
     };
   }, []);
 
-  // Sync props changes dynamically
   useEffect(() => {
     if (engineRef.current) {
       engineRef.current.setText(text);
@@ -65,6 +64,7 @@ export const LivingCanvas = forwardRef(function LivingCanvas(
   }, [themeKey]);
 
   useImperativeHandle(ref, () => ({
+    getEngine: () => engineRef.current,
     reset: () => {
       if (engineRef.current) {
         engineRef.current.reset();

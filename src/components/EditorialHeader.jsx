@@ -11,7 +11,12 @@ export function EditorialHeader({ stats, text, setText }) {
   };
 
   const handleTextChange = (e) => {
-    setText(e.target.value.toUpperCase().slice(0, 16));
+    const nextVal = e.target.value.toUpperCase().slice(0, 16);
+    setText(nextVal);
+    if (nextVal.length > text.length) {
+      const addedChar = nextVal[nextVal.length - 1];
+      soundEngine.playPianoKeyForChar(addedChar, 1);
+    }
   };
 
   return (
@@ -23,16 +28,15 @@ export function EditorialHeader({ stats, text, setText }) {
         </div>
       </div>
 
-      {/* Center Top Typing Section */}
       <div className="header-center">
         <div className="header-typing-bar">
-          <Type size={14} className="typing-bar-icon" />
-          <span className="typing-bar-label">TYPE</span>
+          <Type size={16} className="typing-bar-icon" />
+          <span className="typing-bar-label">TYPE YOUR WORD</span>
           <input
             type="text"
             value={text}
             onChange={handleTextChange}
-            placeholder="TYPE WORD..."
+            placeholder="ENTER WORD..."
             className="header-typing-input"
             maxLength={14}
             autoComplete="off"
@@ -53,7 +57,6 @@ export function EditorialHeader({ stats, text, setText }) {
       </div>
 
       <div className="header-right">
-        {/* Real-time Telemetry Pill */}
         <div className="telemetry-pill">
           <div className="telemetry-item">
             <span className="telemetry-label">STATE</span>
@@ -71,7 +74,6 @@ export function EditorialHeader({ stats, text, setText }) {
           </div>
         </div>
 
-        {/* Audio Feedback Toggle */}
         <button
           type="button"
           onClick={handleToggleSound}
