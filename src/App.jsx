@@ -74,8 +74,13 @@ export default function App() {
         onStatsUpdate={handleStatsUpdate}
       />
 
-      {/* 2. Top Editorial Header with Telemetry & Sound */}
-      <EditorialHeader stats={stats} themeKey={themeKey} />
+      {/* 2. Top Editorial Header with Custom Typing & Telemetry */}
+      <EditorialHeader
+        stats={stats}
+        themeKey={themeKey}
+        text={text}
+        setText={setText}
+      />
 
       {/* 4. Subtle Interaction Cues / Guide */}
       <InteractionGuide hasInteracted={hasInteracted} />
